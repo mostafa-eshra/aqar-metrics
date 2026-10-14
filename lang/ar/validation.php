@@ -9,6 +9,9 @@ return [
     'unique' => 'قيمة :attribute مستخدمة من قبل.',
     'integer' => 'يجب أن يكون حقل :attribute عددًا صحيحًا.',
     'numeric' => 'يجب أن يكون حقل :attribute رقمًا.',
+    'array' => 'يجب أن يكون حقل :attribute قائمة صالحة.',
+    'decimal' => 'عدد المنازل العشرية في حقل :attribute غير صالح.',
+    'in' => 'القيمة المحددة في حقل :attribute غير صالحة.',
     'min' => [
         'numeric' => 'يجب ألا تقل قيمة :attribute عن :min.',
         'string' => 'يجب ألا يقل :attribute عن :min أحرف.',

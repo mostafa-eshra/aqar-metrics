@@ -1,0 +1,151 @@
+<?php
+
+use App\Enums\ProjectStatus;
+use App\Http\Requests\Admin\ProjectRequest;
+use App\Models\User;
+use App\Services\ProjectCollectionScheduleService;
+use Illuminate\Support\Facades\Route;
+
+beforeEach(function () {
+    Route::post('/_testing/projects', static function (ProjectRequest $request) {
+        return response()->json($request->validated());
+    })->middleware('auth');
+});
+
+it('allows incomplete drafts and normalizes Arabic numbers without accepting protected fields', function () {
+    $user = User::factory()->make(['id' => 1]);
+
+    $response = $this->actingAs($user)->postJson('/_testing/projects', [
+        'name' => 'مسودة',
+        'project_duration_years' => '٨',
+        'status' => ProjectStatus::DRAFT->value,
+        'has_hotel' => '1',
+        'land_cost' => '١٢٬٣٤٥٫٦٧',
+        'user_id' => 999,
+        'calculation_version' => 'excel-source-v1',
+        'total_profit' => '100',
+    ]);
+
+    $response
+        ->assertOk()
+        ->assertJsonPath('project_duration_years', '8')
+        ->assertJsonPath('land_cost', '12345.67')
+        ->assertJsonMissingPath('user_id')
+        ->assertJsonMissingPath('calculation_version')
+        ->assertJsonMissingPath('total_profit');
+});
+
+it('accepts a complete project with zero-valued source inputs', function () {
+    $user = User::factory()->make(['id' => 1]);
+    $data = completeProjectRequestData();
+    $data['currency_code'] = ' egp ';
+
+    $this->actingAs($user)
+        ->postJson('/_testing/projects', $data)
+        ->assertOk()
+        ->assertJsonPath('currency_code', 'EGP')
+        ->assertJsonPath('land_cost', '0')
+        ->assertJsonPath('commercial_sales_1_area', '0')
+        ->assertJsonPath('hotel_revenue', '0');
+});
+
+it('rejects non-numeric collection year keys even for drafts', function () {
+    $user = User::factory()->make(['id' => 1]);
+
+    $this->actingAs($user)
+        ->postJson('/_testing/projects', [
+            'name' => 'مسودة',
+            'project_duration_years' => 8,
+            'status' => ProjectStatus::DRAFT->value,
+            'has_hotel' => false,
+            'residential_collection_schedule' => [
+                'residential_phase_1' => ['first' => '100'],
+            ],
+        ])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['residential_collection_schedule.residential_phase_1']);
+});
+
+it('rejects completed data that violates project business rules', function () {
+    $user = User::factory()->make(['id' => 1]);
+    $data = completeProjectRequestData();
+    $data['land_area'] = '0';
+    $data['commercial_sales_1_area'] = '100';
+    $data['commercial_sales_1_price_per_sqm'] = '0';
+    $data['residential_collection_schedule']['residential_phase_1'][8] = '1';
+
+    $this->actingAs($user)
+        ->postJson('/_testing/projects', $data)
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors([
+            'land_area',
+            'commercial_sales_1_price_per_sqm',
+            'residential_collection_schedule.residential_phase_1',
+        ]);
+});
+
+it('requires hotel revenue when the project includes a hotel', function () {
+    $user = User::factory()->make(['id' => 1]);
+    $data = completeProjectRequestData();
+    $data['has_hotel'] = true;
+    unset($data['hotel_revenue']);
+
+    $this->actingAs($user)
+        ->postJson('/_testing/projects', $data)
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['hotel_revenue']);
+});
+
+it('requires every completed collection schedule to match the saved duration', function () {
+    $user = User::factory()->make(['id' => 1]);
+    $data = completeProjectRequestData();
+    $data['project_duration_years'] = 7;
+
+    $this->actingAs($user)
+        ->postJson('/_testing/projects', $data)
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors([
+            'residential_collection_schedule.residential_phase_1',
+            'commercial_collection_schedule.commercial_group_1',
+        ]);
+});
+
+/** @return array<string, mixed> */
+function completeProjectRequestData(): array
+{
+    return [
+        'name' => 'مشروع مكتمل',
+        'description' => null,
+        'location' => 'القاهرة',
+        'currency_code' => 'EGP',
+        'project_duration_years' => 8,
+        'status' => ProjectStatus::COMPLETED->value,
+        'has_hotel' => false,
+        'building_coverage_percent' => '60',
+        'developer_share_percent' => '60',
+        'land_area' => '69000',
+        'land_cost' => '0',
+        'residential_phase_1_price_per_sqm' => '80000',
+        'residential_phase_2_price_per_sqm' => '95000',
+        'residential_phase_3_price_per_sqm' => '120000',
+        'commercial_sales_1_area' => '0',
+        'commercial_sales_1_price_per_sqm' => '150000',
+        'commercial_sales_2_area' => '0',
+        'commercial_sales_2_price_per_sqm' => '200000',
+        'hotel_construction_area' => '0',
+        'hotel_construction_cost_per_sqm' => '120000',
+        'residential_construction_cost_per_sqm' => '25000',
+        'commercial_construction_area' => '0',
+        'commercial_construction_cost_per_sqm' => '30000',
+        'garage_construction_area' => '0',
+        'garage_construction_cost_per_sqm' => '15000',
+        'infrastructure_landscape_area' => '41400',
+        'infrastructure_landscape_cost_per_sqm' => '5000',
+        'marketing_percent' => '4',
+        'sales_percent' => '5',
+        'administration_percent' => '4',
+        'design_supervision_percent' => '2.5',
+        'hotel_revenue' => '0',
+        ...ProjectCollectionScheduleService::defaults(8),
+    ];
+}
