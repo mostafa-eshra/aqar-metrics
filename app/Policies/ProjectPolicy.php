@@ -27,7 +27,7 @@ final class ProjectPolicy
 
     public function update(User $user, Project $project): bool
     {
-        return $this->view($user, $project);
+        return $this->view($user, $project) && $project->status !== ProjectStatus::ARCHIVED;
     }
 
     public function duplicate(User $user, Project $project): bool

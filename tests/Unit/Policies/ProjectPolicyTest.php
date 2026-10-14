@@ -44,14 +44,15 @@ it('denies inactive users and users who do not own the project', function () {
         ->and($policy->view($inactiveAdministrator, $project))->toBeFalse();
 });
 
-it('does not offer archiving for an already archived project', function () {
+it('keeps an archived project immutable', function () {
     $owner = policyUser(id: 10);
     $project = (new Project)->forceFill([
         'user_id' => $owner->id,
         'status' => ProjectStatus::ARCHIVED,
     ]);
 
-    expect((new ProjectPolicy)->archive($owner, $project))->toBeFalse();
+    expect((new ProjectPolicy)->archive($owner, $project))->toBeFalse()
+        ->and((new ProjectPolicy)->update($owner, $project))->toBeFalse();
 });
 
 function policyUser(int $id, UserRole $role = UserRole::USER, bool $isActive = true): User

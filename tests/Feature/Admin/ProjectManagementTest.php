@@ -5,7 +5,9 @@ use App\Enums\ProjectStatus;
 use App\Models\Project;
 use App\Models\User;
 use App\Services\ProjectCollectionScheduleService;
+use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
+use Illuminate\Support\Facades\DB;
 
 uses(LazilyRefreshDatabase::class);
 
@@ -90,6 +92,31 @@ it('returns scoped filtered and escaped DataTables rows', function () {
         ->toContain(route('admin.projects.edit', $listedProject))
         ->toContain(route('admin.projects.duplicate', $listedProject))
         ->toContain(route('admin.projects.archive', $listedProject));
+});
+
+it('loads project owners once for the DataTables page', function () {
+    $owner = User::factory()->create();
+    Project::factory()->count(6)->for($owner, 'owner')->create();
+    $queries = [];
+
+    DB::listen(static function (QueryExecuted $query) use (&$queries): void {
+        $queries[] = $query->sql;
+    });
+
+    $this->actingAs($owner)->getJson(route('admin.projects.index', [
+        'draw' => 1,
+        'start' => 0,
+        'length' => 10,
+        'columns' => dataTableColumns(),
+        'order' => [['column' => 5, 'dir' => 'desc']],
+    ]), ['X-Requested-With' => 'XMLHttpRequest'])->assertOk();
+
+    $ownerQueries = array_filter(
+        $queries,
+        static fn (string $query): bool => preg_match('/from [`"]users[`"]/i', $query) === 1,
+    );
+
+    expect(array_values($ownerQueries))->toHaveCount(1);
 });
 
 it('ignores untrusted DataTables sort names and directions', function () {
@@ -307,6 +334,27 @@ it('archives an owned project', function () {
         ->assertRedirect(route('admin.projects.index'))
         ->assertSessionHas('status', 'تمت أرشفة المشروع.');
     expect($project->refresh()->status)->toBe(ProjectStatus::ARCHIVED);
+});
+
+it('forbids editing an archived project', function () {
+    $owner = User::factory()->create();
+    $project = Project::factory()->archived()->for($owner, 'owner')->create();
+
+    $this->actingAs($owner)
+        ->get(route('admin.projects.edit', $project))
+        ->assertForbidden();
+
+    $this->actingAs($owner)
+        ->post(route('admin.projects.edit', $project), [
+            'name' => 'اسم غير مسموح',
+            'project_duration_years' => 8,
+            'status' => ProjectStatus::DRAFT->value,
+            'has_hotel' => false,
+        ])
+        ->assertForbidden();
+
+    expect($project->refresh()->status)->toBe(ProjectStatus::ARCHIVED)
+        ->and($project->name)->not->toBe('اسم غير مسموح');
 });
 
 it('renders the Arabic project dashboard from one calculation result', function () {

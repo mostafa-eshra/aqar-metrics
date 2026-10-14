@@ -49,6 +49,17 @@ it('accepts a complete project with zero-valued source inputs', function () {
         ->assertJsonPath('hotel_revenue', '0');
 });
 
+it('rejects archived status in project form payloads', function () {
+    $user = User::factory()->make(['id' => 1]);
+    $data = completeProjectRequestData();
+    $data['status'] = ProjectStatus::ARCHIVED->value;
+
+    $this->actingAs($user)
+        ->postJson('/_testing/projects', $data)
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['status']);
+});
+
 it('rejects non-numeric collection year keys even for drafts', function () {
     $user = User::factory()->make(['id' => 1]);
 

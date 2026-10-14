@@ -84,7 +84,7 @@
         <div class="col-lg-3">
             <label class="form-label" for="status">{{ __('app.projects.attributes.status') }}</label>
             <select class="form-select @error('status') is-invalid @enderror" id="status" name="status" required>
-                @foreach (\App\Enums\ProjectStatus::cases() as $status)
+                @foreach ([\App\Enums\ProjectStatus::DRAFT, \App\Enums\ProjectStatus::COMPLETED] as $status)
                     <option value="{{ $status->value }}" @selected(old('status', $project->status?->value) === $status->value)>
                         {{ $status->label() }}
                     </option>

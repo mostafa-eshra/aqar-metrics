@@ -45,7 +45,10 @@ final class ProjectRequest extends FormRequest
             'location' => ['nullable', 'string', 'max:255'],
             'currency_code' => [$requiredWhenCompleted, 'string', Rule::in(array_keys(config('aqar_metrics.project.currencies')))],
             'project_duration_years' => ['required', 'integer', 'min:1', 'max:65535'],
-            'status' => ['required', Rule::enum(ProjectStatus::class)],
+            'status' => ['required', Rule::in([
+                ProjectStatus::DRAFT->value,
+                ProjectStatus::COMPLETED->value,
+            ])],
             'has_hotel' => ['required', 'boolean'],
             'residential_collection_schedule' => [
                 $requiredWhenCompleted,

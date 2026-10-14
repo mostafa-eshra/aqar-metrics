@@ -7,6 +7,8 @@ use App\Models\Project;
 use App\Services\DTO\ProjectMetricsDTO;
 use App\Services\ProjectCalculationService;
 use App\Services\ProjectCollectionScheduleService;
+use Brick\Math\BigDecimal;
+use Brick\Math\RoundingMode;
 use Tests\TestCase;
 
 uses(TestCase::class);
@@ -38,6 +40,18 @@ it('matches all 66 calculated cells in the eight-year source workbook', function
         ])
         ->and($metrics->annualCollectionTotal)->toBe('2442600000.00')
         ->and($metrics->unavailableReasons)->toBe([]);
+});
+
+it('keeps the calculation fixture synchronized with the original workbook', function () {
+    $expectedSourceCells = json_decode(
+        (string) file_get_contents(base_path('tests/Fixtures/calculation-source-results.json')),
+        true,
+        flags: JSON_THROW_ON_ERROR,
+    );
+
+    expect(calculationWorkbookSourceCells($expectedSourceCells))
+        ->toHaveCount(66)
+        ->toBe($expectedSourceCells);
 });
 
 it('documents the land cost difference between corrected and source-compatible versions', function () {
@@ -308,6 +322,63 @@ function calculationSourceCells(ProjectMetricsDTO $metrics): array
         'J38' => $metrics->revenues['commercial_total'],
         'J40' => $metrics->totals['estimated_profit'],
     ];
+}
+
+/**
+ * @param  array<string, string>  $expectedSourceCells
+ * @return array<string, string>
+ */
+function calculationWorkbookSourceCells(array $expectedSourceCells): array
+{
+    $archive = new ZipArchive;
+    $openResult = $archive->open(base_path('calculation.xlsx'));
+
+    expect($openResult)->toBeTrue();
+
+    $worksheetXml = $archive->getFromName('xl/worksheets/sheet1.xml');
+    $archive->close();
+
+    expect($worksheetXml)->toBeString();
+
+    $worksheet = simplexml_load_string($worksheetXml);
+
+    expect($worksheet)->not->toBeFalse();
+
+    $spreadsheetNamespace = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main';
+    $worksheet->registerXPathNamespace('spreadsheet', $spreadsheetNamespace);
+    $cells = [];
+
+    foreach ($worksheet->xpath('//spreadsheet:sheetData/spreadsheet:row/spreadsheet:c') ?: [] as $cell) {
+        $address = (string) $cell['r'];
+
+        if (! array_key_exists($address, $expectedSourceCells)) {
+            continue;
+        }
+
+        $cellContents = $cell->children($spreadsheetNamespace);
+        $rawValue = isset($cellContents->v) ? (string) $cellContents->v : null;
+
+        expect($rawValue)->not->toBeNull();
+
+        $expectedValue = $expectedSourceCells[$address];
+        $decimalPlaces = str_contains($expectedValue, '.')
+            ? strlen(substr(strrchr($expectedValue, '.'), 1))
+            : 0;
+        $cells[$address] = (string) BigDecimal::of($rawValue)->toScale(
+            $decimalPlaces,
+            RoundingMode::HalfUp,
+        );
+    }
+
+    $orderedCells = [];
+
+    foreach (array_keys($expectedSourceCells) as $address) {
+        if (array_key_exists($address, $cells)) {
+            $orderedCells[$address] = $cells[$address];
+        }
+    }
+
+    return $orderedCells;
 }
 
 /** @param array<string, mixed> $overrides */
