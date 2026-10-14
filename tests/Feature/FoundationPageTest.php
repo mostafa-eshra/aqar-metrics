@@ -9,7 +9,7 @@ it('renders the Arabic RTL phase one foundation page', function () {
         ->assertSee('dir="rtl"', false)
         ->assertSee('أساس موحّد لدراسات الجدوى العقارية')
         ->assertSee('حقول الدراسة التي يدخلها المستخدم')
-        ->assertSee('corrected-v1')
+        ->assertSee('flexible-phases-v2')
         ->assertSee('excel-source-v1');
 });
 

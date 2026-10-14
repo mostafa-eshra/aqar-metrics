@@ -13,11 +13,14 @@
             <p class="text-secondary mb-0">{{ __('app.projects.index_description') }}</p>
         </div>
 
-        @can(\App\Enums\PermissionEnum::PROJECT_CREATE->value)
-            <a class="btn btn-aqar" href="{{ route('admin.projects.create') }}">
-                {{ __('app.projects.create') }}
-            </a>
-        @endcan
+        <div class="d-flex flex-wrap gap-2">
+            @can(\App\Enums\PermissionEnum::PROJECT_COMPARE->value)
+                <a class="btn btn-outline-primary" href="{{ route('admin.projects.compare') }}">{{ __('app.phase_nine.compare') }}</a>
+            @endcan
+            @can(\App\Enums\PermissionEnum::PROJECT_CREATE->value)
+                <a class="btn btn-aqar" href="{{ route('admin.projects.create') }}">{{ __('app.projects.create') }}</a>
+            @endcan
+        </div>
     </div>
 
     @if (session('status'))

@@ -8,6 +8,7 @@ use App\Enums\CalculationVersion;
 use App\Enums\ProjectStatus;
 use App\Models\Project;
 use App\Models\User;
+use App\Services\ProjectCashFlowService;
 use App\Services\ProjectCollectionScheduleService;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -35,8 +36,9 @@ class ProjectFactory extends Factory
             'status' => ProjectStatus::COMPLETED,
             'has_hotel' => false,
             'building_coverage_percent' => '60',
-            'calculation_version' => CalculationVersion::CORRECTED_V1,
+            'calculation_version' => CalculationVersion::FLEXIBLE_PHASES_V2,
             'developer_share_percent' => '60',
+            'residential_phase_distribution' => config('aqar_metrics.project.residential_phase_distribution'),
             'land_area' => '69000',
             'land_cost' => '0',
             'residential_phase_1_price_per_sqm' => '80000',
@@ -60,6 +62,8 @@ class ProjectFactory extends Factory
             'administration_percent' => '4',
             'design_supervision_percent' => '2.5',
             'hotel_revenue' => '0',
+            'discount_rate_percent' => '10',
+            'annual_cash_flow_schedule' => ProjectCashFlowService::defaults(8),
             ...$schedules,
         ];
     }

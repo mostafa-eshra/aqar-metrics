@@ -3,6 +3,7 @@
 use App\Enums\ProjectStatus;
 use App\Http\Requests\Admin\ProjectRequest;
 use App\Models\User;
+use App\Services\ProjectCashFlowService;
 use App\Services\ProjectCollectionScheduleService;
 use Illuminate\Support\Facades\Route;
 
@@ -161,6 +162,45 @@ it('allows excluded positive collection years in a draft but rejects them for a 
         ]);
 });
 
+it('accepts and normalizes the phase distribution and complete cash flow years', function () {
+    $user = User::factory()->make(['id' => 1]);
+    $data = completeProjectRequestData();
+    $data['residential_phase_distribution'] = [
+        'phase_1' => '٢٠',
+        'phase_2' => '٣٠',
+        'phase_3' => '٥٠',
+    ];
+    $data['discount_rate_percent'] = '١٠٫٥';
+    $data['annual_cash_flow_schedule'] = ProjectCashFlowService::defaults(8);
+    $data['annual_cash_flow_schedule'][0]['project_cost'] = '١٬٠٠٠';
+
+    $this->actingAs($user)
+        ->postJson('/_testing/projects', $data)
+        ->assertOk()
+        ->assertJsonPath('residential_phase_distribution.phase_1', '20')
+        ->assertJsonPath('discount_rate_percent', '10.5')
+        ->assertJsonPath('annual_cash_flow_schedule.0.project_cost', '1000');
+});
+
+it('rejects an unbalanced phase distribution and incomplete cash flow years', function () {
+    $user = User::factory()->make(['id' => 1]);
+    $data = completeProjectRequestData();
+    $data['residential_phase_distribution'] = [
+        'phase_1' => '20',
+        'phase_2' => '30',
+        'phase_3' => '40',
+    ];
+    $data['annual_cash_flow_schedule'] = [0 => cashFlowRequestYear()];
+
+    $this->actingAs($user)
+        ->postJson('/_testing/projects', $data)
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors([
+            'residential_phase_distribution',
+            'annual_cash_flow_schedule',
+        ]);
+});
+
 /** @return array<string, mixed> */
 function completeProjectRequestData(): array
 {
@@ -220,5 +260,17 @@ function collectionScheduleForDuration(int $durationYears): array
             'commercial_group_1' => $percentages,
             'commercial_group_2' => $percentages,
         ],
+    ];
+}
+
+/** @return array<string, string> */
+function cashFlowRequestYear(): array
+{
+    return [
+        'other_revenue' => '0',
+        'project_cost' => '0',
+        'financing_inflow' => '0',
+        'financing_cost' => '0',
+        'taxes' => '0',
     ];
 }

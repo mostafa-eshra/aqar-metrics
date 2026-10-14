@@ -43,24 +43,20 @@ final class ProjectCalculationService
             self::input($project, 'developer_share_percent'),
             $areaScale,
         );
-        $residentialPhaseArea = self::divide(
-            $developerSaleableArea,
-            self::available((string) config('aqar_metrics.project.residential_phase_count')),
-            $areaScale,
-        );
+        $residentialPhaseAreas = self::residentialPhaseAreas($project, $developerSaleableArea, $areaScale);
 
         $areas = [
             'maximum_buildable_area' => self::record($unavailableReasons, 'areas.maximum_buildable_area', $maximumBuildableArea),
             'developer_saleable_area' => self::record($unavailableReasons, 'areas.developer_saleable_area', $developerSaleableArea),
-            'residential_phase_1_area' => self::record($unavailableReasons, 'areas.residential_phase_1_area', $residentialPhaseArea),
-            'residential_phase_2_area' => self::record($unavailableReasons, 'areas.residential_phase_2_area', $residentialPhaseArea),
-            'residential_phase_3_area' => self::record($unavailableReasons, 'areas.residential_phase_3_area', $residentialPhaseArea),
+            'residential_phase_1_area' => self::record($unavailableReasons, 'areas.residential_phase_1_area', $residentialPhaseAreas['residential_phase_1']),
+            'residential_phase_2_area' => self::record($unavailableReasons, 'areas.residential_phase_2_area', $residentialPhaseAreas['residential_phase_2']),
+            'residential_phase_3_area' => self::record($unavailableReasons, 'areas.residential_phase_3_area', $residentialPhaseAreas['residential_phase_3']),
         ];
 
         $revenueMetrics = [
-            'residential_phase_1' => self::multiply($residentialPhaseArea, self::input($project, 'residential_phase_1_price_per_sqm'), $moneyScale),
-            'residential_phase_2' => self::multiply($residentialPhaseArea, self::input($project, 'residential_phase_2_price_per_sqm'), $moneyScale),
-            'residential_phase_3' => self::multiply($residentialPhaseArea, self::input($project, 'residential_phase_3_price_per_sqm'), $moneyScale),
+            'residential_phase_1' => self::multiply($residentialPhaseAreas['residential_phase_1'], self::input($project, 'residential_phase_1_price_per_sqm'), $moneyScale),
+            'residential_phase_2' => self::multiply($residentialPhaseAreas['residential_phase_2'], self::input($project, 'residential_phase_2_price_per_sqm'), $moneyScale),
+            'residential_phase_3' => self::multiply($residentialPhaseAreas['residential_phase_3'], self::input($project, 'residential_phase_3_price_per_sqm'), $moneyScale),
             'commercial_group_1' => self::multiply(
                 self::input($project, 'commercial_sales_1_area'),
                 self::input($project, 'commercial_sales_1_price_per_sqm'),
@@ -299,6 +295,73 @@ final class ProjectCalculationService
         }
 
         return CalculationVersion::from((string) $version);
+    }
+
+    /**
+     * @param  array{value: string|null, reasons: list<string>}  $developerSaleableArea
+     * @return array<string, array{value: string|null, reasons: list<string>}>
+     */
+    private static function residentialPhaseAreas(
+        Project $project,
+        array $developerSaleableArea,
+        int $areaScale,
+    ): array {
+        $distribution = $project->residential_phase_distribution;
+
+        if (! is_array($distribution)) {
+            $equalArea = self::divide(
+                $developerSaleableArea,
+                self::available((string) config('aqar_metrics.project.residential_phase_count')),
+                $areaScale,
+            );
+
+            return [
+                'residential_phase_1' => $equalArea,
+                'residential_phase_2' => $equalArea,
+                'residential_phase_3' => $equalArea,
+            ];
+        }
+
+        $percentages = [];
+
+        foreach (['phase_1', 'phase_2', 'phase_3'] as $phase) {
+            $value = $distribution[$phase] ?? null;
+
+            if ((! is_string($value) && ! is_int($value) && ! is_float($value))
+                || ! is_numeric((string) $value)
+                || DecimalMath::compare((string) $value, '0') < 0) {
+                $unavailable = self::unavailable('invalid_residential_phase_distribution');
+
+                return [
+                    'residential_phase_1' => $unavailable,
+                    'residential_phase_2' => $unavailable,
+                    'residential_phase_3' => $unavailable,
+                ];
+            }
+
+            $percentages[$phase] = (string) $value;
+        }
+
+        if (DecimalMath::compare(DecimalMath::sum(array_values($percentages), 10), '100.0000000000') !== 0) {
+            $unavailable = self::unavailable('invalid_residential_phase_distribution');
+
+            return [
+                'residential_phase_1' => $unavailable,
+                'residential_phase_2' => $unavailable,
+                'residential_phase_3' => $unavailable,
+            ];
+        }
+
+        $phaseOne = self::percentage($developerSaleableArea, self::available($percentages['phase_1']), $areaScale);
+        $phaseTwo = self::percentage($developerSaleableArea, self::available($percentages['phase_2']), $areaScale);
+        $firstTwo = self::sum([$phaseOne, $phaseTwo], $areaScale);
+        $phaseThree = self::subtract($developerSaleableArea, $firstTwo, $areaScale);
+
+        return [
+            'residential_phase_1' => $phaseOne,
+            'residential_phase_2' => $phaseTwo,
+            'residential_phase_3' => $phaseThree,
+        ];
     }
 
     /** @return array{value: string|null, reasons: list<string>} */

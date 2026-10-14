@@ -16,4 +16,9 @@ enum PermissionEnum: string
     case PROJECT_DUPLICATE = 'projects.duplicate';
     case PROJECT_ARCHIVE = 'projects.archive';
     case PROJECT_PREVIEW = 'projects.preview';
+    case PROJECT_ANALYZE = 'projects.analyze';
+    case PROJECT_COMPARE = 'projects.compare';
+    case PROJECT_EXPORT = 'projects.export';
+    case PROJECT_SHARE = 'projects.share';
+    case PROJECT_SCENARIO = 'projects.scenario';
 }

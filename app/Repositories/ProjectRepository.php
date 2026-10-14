@@ -30,7 +30,12 @@ final class ProjectRepository
         }
 
         if (! $user->isAdministrator()) {
-            $query->whereBelongsTo($user, 'owner');
+            $query->where(function (Builder $query) use ($user): void {
+                $query->whereBelongsTo($user, 'owner')
+                    ->orWhereHas('viewers', static function (Builder $query) use ($user): void {
+                        $query->whereKey($user->getKey());
+                    });
+            });
         }
 
         return $query;
@@ -40,7 +45,7 @@ final class ProjectRepository
     public static function filter(User $user, ProjectFilterDTO $filter): Builder
     {
         $query = self::queryVisibleTo($user)
-            ->with('owner')
+            ->with(['owner', 'viewers:id'])
             ->select('projects.*');
 
         if ($filter->text !== null) {

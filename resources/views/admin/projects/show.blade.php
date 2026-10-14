@@ -21,6 +21,9 @@
         </div>
 
         <div class="d-flex flex-wrap gap-2">
+            @can('analyze', $project)
+                <a class="btn btn-outline-success" href="{{ route('admin.projects.analysis', $project) }}">{{ __('app.phase_nine.open_analysis') }}</a>
+            @endcan
             @can('update', $project)
                 <a class="btn btn-aqar" href="{{ route('admin.projects.edit', $project) }}">{{ __('app.edit') }}</a>
             @endcan
@@ -35,6 +38,9 @@
                     @csrf
                     <button class="btn btn-outline-danger" type="submit">{{ __('app.projects.archive') }}</button>
                 </form>
+            @endcan
+            @can('export', $project)
+                <a class="btn btn-outline-primary" href="{{ route('admin.projects.exports.excel', $project) }}">{{ __('app.phase_nine.export_excel') }}</a>
             @endcan
         </div>
     </div>

@@ -7,6 +7,7 @@ namespace App\Http\Requests\Admin;
 use App\Enums\ProjectStatus;
 use App\Models\Project;
 use App\Models\User;
+use App\Services\ProjectCashFlowService;
 use App\Services\ProjectCollectionScheduleService;
 use Brick\Math\BigDecimal;
 use Illuminate\Foundation\Http\FormRequest;
@@ -50,6 +51,13 @@ final class ProjectRequest extends FormRequest
                 ProjectStatus::COMPLETED->value,
             ])],
             'has_hotel' => ['required', 'boolean'],
+            'residential_phase_distribution' => [
+                'nullable',
+                'array:phase_1,phase_2,phase_3',
+                'required_array_keys:phase_1,phase_2,phase_3',
+            ],
+            'discount_rate_percent' => ['nullable', 'numeric', 'min:0', 'max:1000', 'decimal:0,4'],
+            'annual_cash_flow_schedule' => ['nullable', 'array'],
             'residential_collection_schedule' => [
                 $requiredWhenCompleted,
                 'array:'.implode(',', ProjectCollectionScheduleService::RESIDENTIAL_GROUPS),
@@ -73,6 +81,30 @@ final class ProjectRequest extends FormRequest
 
         foreach (Project::PERCENT_FIELDS as $field) {
             $rules[$field] = [$requiredWhenCompleted, 'numeric', 'min:0', 'max:100', 'decimal:0,2'];
+        }
+
+        foreach (['phase_1', 'phase_2', 'phase_3'] as $phase) {
+            $rules["residential_phase_distribution.{$phase}"] = [
+                'required_with:residential_phase_distribution',
+                'numeric',
+                'min:0',
+                'max:100',
+                'decimal:0,10',
+            ];
+        }
+
+        $rules['annual_cash_flow_schedule.*'] = [
+            'array:'.implode(',', ProjectCashFlowService::INPUT_FIELDS),
+        ];
+
+        foreach (ProjectCashFlowService::INPUT_FIELDS as $field) {
+            $rules["annual_cash_flow_schedule.*.{$field}"] = [
+                'required_with:annual_cash_flow_schedule',
+                'numeric',
+                'min:0',
+                'max:9999999999999999.99',
+                'decimal:0,2',
+            ];
         }
 
         $this->addCollectionScheduleRules(
@@ -104,6 +136,8 @@ final class ProjectRequest extends FormRequest
                 scheduleField: 'residential_collection_schedule',
                 groups: ProjectCollectionScheduleService::RESIDENTIAL_GROUPS,
             );
+            $this->validateResidentialPhaseDistribution($validator);
+            $this->validateCashFlowYears($validator);
             $this->validateScheduleYearKeys(
                 validator: $validator,
                 scheduleField: 'commercial_collection_schedule',
@@ -142,7 +176,7 @@ final class ProjectRequest extends FormRequest
 
         $normalized = [];
 
-        foreach ([...Project::MONEY_FIELDS, ...Project::AREA_FIELDS, ...Project::PERCENT_FIELDS, 'project_duration_years'] as $field) {
+        foreach ([...Project::MONEY_FIELDS, ...Project::AREA_FIELDS, ...Project::PERCENT_FIELDS, 'project_duration_years', 'discount_rate_percent'] as $field) {
             if ($this->exists($field)) {
                 $normalized[$field] = self::normalizeNumber($this->input($field));
             }
@@ -152,6 +186,18 @@ final class ProjectRequest extends FormRequest
             if ($this->exists($scheduleField)) {
                 $normalized[$scheduleField] = self::normalizeSchedule($this->input($scheduleField));
             }
+        }
+
+        if ($this->exists('residential_phase_distribution')) {
+            $normalized['residential_phase_distribution'] = self::normalizeFlatNumbers(
+                $this->input('residential_phase_distribution'),
+            );
+        }
+
+        if ($this->exists('annual_cash_flow_schedule')) {
+            $normalized['annual_cash_flow_schedule'] = self::normalizeNestedNumbers(
+                $this->input('annual_cash_flow_schedule'),
+            );
         }
 
         if ($this->exists('currency_code')) {
@@ -318,5 +364,83 @@ final class ProjectRequest extends FormRequest
         }
 
         return $schedule;
+    }
+
+    private function validateResidentialPhaseDistribution(Validator $validator): void
+    {
+        $distribution = $this->input('residential_phase_distribution');
+
+        if (! is_array($distribution) || count($distribution) !== 3) {
+            return;
+        }
+
+        $total = BigDecimal::zero();
+
+        foreach ($distribution as $percentage) {
+            $total = $total->plus((string) $percentage);
+        }
+
+        if ($total->compareTo('100') !== 0) {
+            $validator->errors()->add(
+                'residential_phase_distribution',
+                trans('app.phase_nine.validation.phase_distribution_total'),
+            );
+        }
+    }
+
+    private function validateCashFlowYears(Validator $validator): void
+    {
+        $schedule = $this->input('annual_cash_flow_schedule');
+
+        if (! is_array($schedule)) {
+            return;
+        }
+
+        foreach (array_keys($schedule) as $year) {
+            if ((string) (int) $year !== (string) $year || (int) $year < 0) {
+                $validator->errors()->add(
+                    'annual_cash_flow_schedule',
+                    trans('app.phase_nine.validation.cash_flow_years'),
+                );
+
+                return;
+            }
+        }
+
+        $years = array_map('intval', array_keys($schedule));
+        sort($years);
+
+        if ($years !== range(0, $this->integer('project_duration_years'))) {
+            $validator->errors()->add(
+                'annual_cash_flow_schedule',
+                trans('app.phase_nine.validation.cash_flow_years'),
+            );
+        }
+    }
+
+    private static function normalizeFlatNumbers(mixed $values): mixed
+    {
+        if (! is_array($values)) {
+            return $values;
+        }
+
+        foreach ($values as $key => $value) {
+            $values[$key] = self::normalizeNumber($value);
+        }
+
+        return $values;
+    }
+
+    private static function normalizeNestedNumbers(mixed $values): mixed
+    {
+        if (! is_array($values)) {
+            return $values;
+        }
+
+        foreach ($values as $key => $row) {
+            $values[$key] = self::normalizeFlatNumbers($row);
+        }
+
+        return $values;
     }
 }

@@ -21,6 +21,10 @@ it('allows active owners and administrators to manage a project', function () {
         ->and($policy->update($owner, $project))->toBeTrue()
         ->and($policy->duplicate($owner, $project))->toBeTrue()
         ->and($policy->archive($owner, $project))->toBeTrue()
+        ->and($policy->analyze($owner, $project))->toBeTrue()
+        ->and($policy->export($owner, $project))->toBeTrue()
+        ->and($policy->share($owner, $project))->toBeTrue()
+        ->and($policy->createScenario($owner, $project))->toBeTrue()
         ->and($policy->view($administrator, $project))->toBeTrue()
         ->and($policy->update($administrator, $project))->toBeTrue();
 });
@@ -39,6 +43,8 @@ it('denies inactive users and users who do not own the project', function () {
         ->and($policy->update($otherUser, $project))->toBeFalse()
         ->and($policy->duplicate($otherUser, $project))->toBeFalse()
         ->and($policy->archive($otherUser, $project))->toBeFalse()
+        ->and($policy->share($otherUser, $project))->toBeFalse()
+        ->and($policy->createScenario($otherUser, $project))->toBeFalse()
         ->and($policy->viewAny($inactiveAdministrator))->toBeFalse()
         ->and($policy->create($inactiveAdministrator))->toBeFalse()
         ->and($policy->view($inactiveAdministrator, $project))->toBeFalse();

@@ -24,7 +24,7 @@ it('persists every source input with exact casts and server assigned ownership',
 
     expect($project->user_id)->toBe($owner->id)
         ->and($project->status)->toBe(ProjectStatus::COMPLETED)
-        ->and($project->calculation_version)->toBe(CalculationVersion::CORRECTED_V1)
+        ->and($project->calculation_version)->toBe(CalculationVersion::FLEXIBLE_PHASES_V2)
         ->and($project->project_duration_years)->toBe(8)
         ->and($project->has_hotel)->toBeFalse()
         ->and($project->developer_share_percent)->toBe('60.00')
@@ -74,7 +74,7 @@ it('keeps ownership and calculation version unchanged during updates', function 
 
     expect($updatedProject->name)->toBe('الاسم المعدل')
         ->and($updatedProject->user_id)->toBe($owner->id)
-        ->and($updatedProject->calculation_version)->toBe(CalculationVersion::CORRECTED_V1);
+        ->and($updatedProject->calculation_version)->toBe(CalculationVersion::FLEXIBLE_PHASES_V2);
 });
 
 it('scopes repository queries to owners while administrators can see all projects', function () {

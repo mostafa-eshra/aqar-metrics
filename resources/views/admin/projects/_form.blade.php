@@ -174,6 +174,8 @@
     </div>
 </section>
 
+@include('admin.projects._phase_nine_fields', ['project' => $project])
+
 <div class="d-flex flex-wrap gap-2 mt-4">
     <button class="btn btn-aqar" type="submit">{{ __('app.save') }}</button>
     <button class="btn btn-outline-primary" id="preview-button" type="button">{{ __('app.projects.preview.button') }}</button>

@@ -16,6 +16,7 @@
             const previewAnnualCollection = document.getElementById('preview-annual-collection');
             const previewAnnualCollectionBody = document.getElementById('preview-annual-collection-body');
             const previewAnnualCollectionTotal = document.getElementById('preview-annual-collection-total');
+            const cashFlowInputBody = document.getElementById('cash-flow-input-body');
             const unavailable = @json(__('app.projects.not_available'));
             const labels = {
                 group: @json(__('app.projects.collection_schedule.group')),
@@ -31,6 +32,7 @@
                 redistributionReady: @json(__('app.projects.collection_schedule.redistribution_ready')),
             };
             const scheduleState = new Map();
+            const cashFlowState = new Map();
             const requiredTotal = Number(scheduleEditor?.dataset.requiredTotal ?? 100);
 
             const replacePlaceholders = (value, replacements) => {
@@ -60,6 +62,56 @@
                 const duration = Number(normalized);
 
                 return Number.isSafeInteger(duration) && duration >= 1 ? duration : null;
+            };
+
+            const cashFlowFields = @json(\App\Services\ProjectCashFlowService::INPUT_FIELDS);
+            const cashFlowLabels = {
+                yearZero: @json(__('app.phase_nine.cash_flow.year_zero')),
+                year: @json(__('app.phase_nine.cash_flow.year', ['year' => ':year'])),
+            };
+
+            const captureCashFlowInputs = () => {
+                cashFlowInputBody?.querySelectorAll('[data-cash-flow-input]').forEach(input => {
+                    cashFlowState.set(`${input.dataset.year}|${input.dataset.field}`, input.value);
+                });
+            };
+
+            const renderCashFlowInputs = duration => {
+                if (!cashFlowInputBody || !Number.isInteger(duration) || duration < 1) {
+                    return;
+                }
+
+                captureCashFlowInputs();
+                cashFlowInputBody.replaceChildren();
+
+                for (let year = 0; year <= duration; year += 1) {
+                    const row = document.createElement('tr');
+                    const heading = document.createElement('th');
+                    heading.scope = 'row';
+                    heading.className = 'text-nowrap';
+                    heading.textContent = year === 0
+                        ? cashFlowLabels.yearZero
+                        : replacePlaceholders(cashFlowLabels.year, { year });
+                    row.dataset.cashFlowYear = String(year);
+                    row.appendChild(heading);
+
+                    for (const field of cashFlowFields) {
+                        const cell = document.createElement('td');
+                        const input = document.createElement('input');
+                        input.className = 'form-control form-control-sm text-end';
+                        input.type = 'text';
+                        input.inputMode = 'decimal';
+                        input.name = `annual_cash_flow_schedule[${year}][${field}]`;
+                        input.value = cashFlowState.get(`${year}|${field}`) ?? '0';
+                        input.dataset.cashFlowInput = '';
+                        input.dataset.year = String(year);
+                        input.dataset.field = field;
+                        cell.appendChild(input);
+                        row.appendChild(cell);
+                    }
+
+                    cashFlowInputBody.appendChild(row);
+                }
             };
 
             const parsePercentage = value => {
@@ -339,6 +391,7 @@
 
                 if (initialDuration !== null) {
                     renderSchedule(initialDuration);
+                    captureCashFlowInputs();
                 }
 
                 const handleDurationChange = () => {
@@ -353,6 +406,7 @@
                     }
 
                     renderSchedule(duration);
+                    renderCashFlowInputs(duration);
                 };
 
                 durationInput.addEventListener('input', handleDurationChange);
@@ -401,6 +455,14 @@
                     renderSchedule(duration, false);
                 });
             }
+
+            cashFlowInputBody?.addEventListener('input', event => {
+                if (!event.target.matches('[data-cash-flow-input]')) {
+                    return;
+                }
+
+                cashFlowState.set(`${event.target.dataset.year}|${event.target.dataset.field}`, event.target.value);
+            });
 
             if (!form || !previewButton || !previewPanel || !previewError || !previewResults) {
                 return;

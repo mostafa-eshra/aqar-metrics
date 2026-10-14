@@ -5,7 +5,7 @@ use App\Enums\CalculationVersion;
 return [
 
     'calculation' => [
-        'default_version' => CalculationVersion::CORRECTED_V1->value,
+        'default_version' => CalculationVersion::FLEXIBLE_PHASES_V2->value,
         'source_compatibility_version' => CalculationVersion::EXCEL_SOURCE_V1->value,
         'money_scale' => 2,
         'area_scale' => 4,
@@ -17,12 +17,32 @@ return [
         'default_duration_years' => 8,
         'default_building_coverage_percent' => '60.00',
         'residential_phase_count' => 3,
+        'residential_phase_distribution' => [
+            'phase_1' => '33.3333333333',
+            'phase_2' => '33.3333333333',
+            'phase_3' => '33.3333333334',
+        ],
         'currencies' => [
             'EGP' => 'الجنيه المصري',
             'SAR' => 'الريال السعودي',
             'AED' => 'الدرهم الإماراتي',
             'USD' => 'الدولار الأمريكي',
         ],
+    ],
+
+    'analysis' => [
+        'sensitivity_fields' => [
+            'land_cost',
+            'residential_phase_1_price_per_sqm',
+            'residential_phase_2_price_per_sqm',
+            'residential_phase_3_price_per_sqm',
+            'residential_construction_cost_per_sqm',
+            'marketing_percent',
+            'sales_percent',
+            'administration_percent',
+        ],
+        'sensitivity_change_limit' => 100,
+        'comparison_limit' => 6,
     ],
 
     'study_rules' => [

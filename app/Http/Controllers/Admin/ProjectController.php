@@ -14,6 +14,7 @@ use App\Models\User;
 use App\Repositories\DTO\ProjectFilterDTO;
 use App\Repositories\ProjectRepository;
 use App\Services\ProjectCalculationService;
+use App\Services\ProjectCashFlowService;
 use App\Services\ProjectCollectionScheduleService;
 use App\Services\ProjectService;
 use Illuminate\Contracts\View\View;
@@ -90,6 +91,8 @@ final class ProjectController extends BaseController implements HasMiddleware
             'status' => ProjectStatus::DRAFT,
             'has_hotel' => false,
             'building_coverage_percent' => config('aqar_metrics.project.default_building_coverage_percent'),
+            'residential_phase_distribution' => config('aqar_metrics.project.residential_phase_distribution'),
+            'annual_cash_flow_schedule' => ProjectCashFlowService::defaults($durationYears),
             ...$schedules,
         ]);
 

@@ -23,7 +23,9 @@ final class ProjectService
 
         $attributes['residential_collection_schedule'] ??= $defaultSchedules['residential_collection_schedule'];
         $attributes['commercial_collection_schedule'] ??= $defaultSchedules['commercial_collection_schedule'];
+        $attributes['residential_phase_distribution'] ??= config('aqar_metrics.project.residential_phase_distribution');
         self::adjustCollectionSchedules($attributes, $durationYears);
+        self::adjustCashFlowSchedule($attributes, $durationYears);
 
         self::applyHotelChoice($attributes);
 
@@ -48,6 +50,12 @@ final class ProjectService
             self::adjustCollectionSchedules($attributes, $durationYears);
         }
 
+        if (array_key_exists('project_duration_years', $attributes)
+            || array_key_exists('annual_cash_flow_schedule', $attributes)) {
+            $attributes['annual_cash_flow_schedule'] ??= $project->annual_cash_flow_schedule ?? [];
+            self::adjustCashFlowSchedule($attributes, $durationYears);
+        }
+
         self::applyHotelChoice($attributes);
 
         return ProjectRepository::update($project, $attributes);
@@ -63,7 +71,9 @@ final class ProjectService
 
         $attributes['residential_collection_schedule'] ??= $defaultSchedules['residential_collection_schedule'];
         $attributes['commercial_collection_schedule'] ??= $defaultSchedules['commercial_collection_schedule'];
+        $attributes['residential_phase_distribution'] ??= config('aqar_metrics.project.residential_phase_distribution');
         self::adjustCollectionSchedules($attributes, $durationYears);
+        self::adjustCashFlowSchedule($attributes, $durationYears);
 
         self::applyHotelChoice($attributes);
 
@@ -82,6 +92,18 @@ final class ProjectService
         $duplicate->save();
 
         return $duplicate->refresh();
+    }
+
+    public static function createScenario(Project $project, string $scenarioName): Project
+    {
+        $scenario = $project->replicate();
+        $scenario->parentProject()->associate($project->parent_project_id ?? $project->getKey());
+        $scenario->scenario_name = $scenarioName;
+        $scenario->name = $project->name.' — '.$scenarioName;
+        $scenario->status = ProjectStatus::DRAFT;
+        $scenario->save();
+
+        return $scenario->refresh();
     }
 
     public static function archive(Project $project): Project
@@ -135,5 +157,24 @@ final class ProjectService
                 durationYears: $durationYears,
             );
         }
+    }
+
+    /** @param array<string, mixed> $attributes */
+    private static function adjustCashFlowSchedule(array &$attributes, int $durationYears): void
+    {
+        $schedule = $attributes['annual_cash_flow_schedule'] ?? [];
+
+        if (! is_array($schedule)) {
+            return;
+        }
+
+        $adjusted = ProjectCashFlowService::defaults($durationYears);
+
+        foreach ($adjusted as $year => $defaults) {
+            $yearValues = $schedule[$year] ?? $schedule[(string) $year] ?? [];
+            $adjusted[$year] = is_array($yearValues) ? [...$defaults, ...$yearValues] : $defaults;
+        }
+
+        $attributes['annual_cash_flow_schedule'] = $adjusted;
     }
 }
