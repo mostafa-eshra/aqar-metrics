@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\ProjectController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Middleware\EnsureUserIsActive;
@@ -20,6 +21,15 @@ Route::middleware(['auth', EnsureUserIsActive::class])
     ->name('admin.')
     ->group(function (): void {
         Route::get('/', DashboardController::class)->name('dashboard');
+
+        Route::prefix('projects')->name('projects.')->group(function (): void {
+            Route::get('/', [ProjectController::class, 'index'])->name('index');
+            Route::match(['get', 'post'], '/create', [ProjectController::class, 'create'])->name('create');
+            Route::post('/preview', [ProjectController::class, 'preview'])->name('preview');
+            Route::match(['get', 'post'], '/{project}/edit', [ProjectController::class, 'edit'])->name('edit');
+            Route::post('/{project}/duplicate', [ProjectController::class, 'duplicate'])->name('duplicate');
+            Route::post('/{project}/archive', [ProjectController::class, 'archive'])->name('archive');
+        });
 
         Route::prefix('users')->name('users.')->group(function (): void {
             Route::get('/', [UserController::class, 'index'])->name('index');

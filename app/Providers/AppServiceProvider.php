@@ -36,7 +36,8 @@ final class AppServiceProvider extends ServiceProvider
         foreach (PermissionEnum::cases() as $permission) {
             Gate::define(
                 $permission->value,
-                static fn (User $user): bool => $user->is_active && $user->isAdministrator(),
+                static fn (User $user): bool => $user->is_active
+                    && (str_starts_with($permission->value, 'projects.') || $user->isAdministrator()),
             );
         }
     }

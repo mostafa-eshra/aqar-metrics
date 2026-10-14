@@ -78,6 +78,63 @@ body {
     background: #eef5f2;
 }
 
+.project-form-section {
+    padding: 1.25rem 0;
+    border-bottom: 1px solid var(--aqar-border);
+}
+
+.project-form-section:first-of-type {
+    padding-top: 0;
+}
+
+.project-form-section:last-of-type {
+    border-bottom: 0;
+}
+
+.project-form-section h2 {
+    margin-bottom: 1rem;
+}
+
+.preview-panel {
+    padding: 1.25rem;
+    border: 1px solid #d6e5df;
+    border-radius: 0.85rem;
+    background: #f4f9f7;
+}
+
+.preview-metric {
+    height: 100%;
+    padding: 1rem;
+    border: 1px solid var(--aqar-border);
+    border-radius: 0.75rem;
+    background: #fff;
+}
+
+.preview-metric span,
+.preview-metric strong {
+    display: block;
+}
+
+.preview-metric span {
+    margin-bottom: 0.35rem;
+    color: #65706e;
+    font-size: 0.875rem;
+}
+
+.preview-metric strong {
+    overflow-wrap: anywhere;
+    color: var(--aqar-primary-dark);
+    font-size: 1.05rem;
+}
+
+#projects-table td {
+    vertical-align: middle;
+}
+
+#projects-table td:last-child {
+    min-width: 12rem;
+}
+
 @media (max-width: 575.98px) {
     .display-5 {
         font-size: 2rem;

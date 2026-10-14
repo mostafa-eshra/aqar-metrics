@@ -118,8 +118,10 @@ it('defines administrator permissions and project ownership access rules', funct
     $inactiveAdministrator = User::factory()->administrator()->inactive()->create();
 
     foreach (PermissionEnum::cases() as $permission) {
+        $regularUserHasPermission = str_starts_with($permission->value, 'projects.');
+
         expect($administrator->can($permission->value))->toBeTrue()
-            ->and($owner->can($permission->value))->toBeFalse()
+            ->and($owner->can($permission->value))->toBe($regularUserHasPermission)
             ->and($inactiveAdministrator->can($permission->value))->toBeFalse();
     }
 

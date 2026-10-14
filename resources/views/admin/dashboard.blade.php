@@ -13,11 +13,19 @@
                 {{ __('app.dashboard.role') }}: {{ auth()->user()->role->label() }}
             </p>
 
-            @can(\App\Enums\PermissionEnum::USER_LIST->value)
-                <a class="btn btn-aqar" href="{{ route('admin.users.index') }}">
-                    {{ __('app.users.manage') }}
-                </a>
-            @endcan
+            <div class="d-flex flex-wrap gap-2">
+                @can(\App\Enums\PermissionEnum::PROJECT_LIST->value)
+                    <a class="btn btn-aqar" href="{{ route('admin.projects.index') }}">
+                        {{ __('app.projects.manage') }}
+                    </a>
+                @endcan
+
+                @can(\App\Enums\PermissionEnum::USER_LIST->value)
+                    <a class="btn btn-outline-secondary" href="{{ route('admin.users.index') }}">
+                        {{ __('app.users.manage') }}
+                    </a>
+                @endcan
+            </div>
         </div>
     </section>
 @endsection

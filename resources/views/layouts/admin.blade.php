@@ -18,6 +18,11 @@
 
             <div class="d-flex align-items-center gap-2 text-white">
                 @auth
+                    @can(\App\Enums\PermissionEnum::PROJECT_LIST->value)
+                        <a class="btn btn-sm btn-outline-light" href="{{ route('admin.projects.index') }}">
+                            {{ __('app.projects.title') }}
+                        </a>
+                    @endcan
                     @can(\App\Enums\PermissionEnum::USER_LIST->value)
                         <a class="btn btn-sm btn-outline-light" href="{{ route('admin.users.index') }}">
                             {{ __('app.users.title') }}
