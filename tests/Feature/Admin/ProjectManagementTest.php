@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\CalculationVersion;
 use App\Enums\ProjectStatus;
 use App\Models\Project;
 use App\Models\User;
@@ -10,6 +11,14 @@ uses(LazilyRefreshDatabase::class);
 
 it('redirects guests to login from the project list', function () {
     $response = $this->get(route('admin.projects.index'));
+
+    $response->assertRedirect(route('login'));
+});
+
+it('redirects guests to login from project results', function () {
+    $project = Project::factory()->create();
+
+    $response = $this->get(route('admin.projects.show', $project));
 
     $response->assertRedirect(route('login'));
 });
@@ -77,6 +86,7 @@ it('returns scoped filtered and escaped DataTables rows', function () {
         ->toContain('&lt;script&gt;')
         ->not->toContain('<script>alert("unsafe")</script>');
     expect($response->json('data.0.actions'))
+        ->toContain(route('admin.projects.show', $listedProject))
         ->toContain(route('admin.projects.edit', $listedProject))
         ->toContain(route('admin.projects.duplicate', $listedProject))
         ->toContain(route('admin.projects.archive', $listedProject));
@@ -116,11 +126,11 @@ it('creates and reopens a draft with server assigned ownership', function () {
         'user_id' => $otherUser->id,
     ]);
 
-    $response
-        ->assertRedirect(route('admin.projects.index'))
-        ->assertSessionHas('status', 'تم إنشاء المشروع بنجاح.');
-
     $project = Project::query()->where('name', 'مشروع الواجهة')->firstOrFail();
+
+    $response
+        ->assertRedirect(route('admin.projects.show', $project))
+        ->assertSessionHas('status', 'تم إنشاء المشروع بنجاح.');
 
     expect($project->user_id)->toBe($owner->id)
         ->and($project->project_duration_years)->toBe(8)
@@ -151,7 +161,7 @@ it('updates an owned project without changing its owner', function () {
     ]);
 
     $response
-        ->assertRedirect(route('admin.projects.edit', $project))
+        ->assertRedirect(route('admin.projects.show', $project))
         ->assertSessionHas('status', 'تم تحديث المشروع بنجاح.');
 
     expect($project->refresh()->name)->toBe('اسم المشروع بعد التعديل')
@@ -166,11 +176,11 @@ it('creates a completed project when every required input and schedule is valid'
         completeProjectFormData(),
     );
 
-    $response
-        ->assertRedirect(route('admin.projects.index'))
-        ->assertSessionHas('status', 'تم إنشاء المشروع بنجاح.');
-
     $project = Project::query()->where('name', 'مشروع المعاينة')->firstOrFail();
+
+    $response
+        ->assertRedirect(route('admin.projects.show', $project))
+        ->assertSessionHas('status', 'تم إنشاء المشروع بنجاح.');
 
     expect($project->status)->toBe(ProjectStatus::COMPLETED)
         ->and($project->user_id)->toBe($owner->id)
@@ -209,7 +219,7 @@ it('adds zero collection years when a draft duration increases from eight to ten
         'has_hotel' => '0',
     ]);
 
-    $response->assertRedirect(route('admin.projects.edit', $project));
+    $response->assertRedirect(route('admin.projects.show', $project));
 
     $project->refresh();
 
@@ -231,7 +241,7 @@ it('keeps positive excluded years visible after reducing a draft from eight to f
         'has_hotel' => '0',
     ]);
 
-    $response->assertRedirect(route('admin.projects.edit', $project));
+    $response->assertRedirect(route('admin.projects.show', $project));
 
     $project->refresh();
 
@@ -264,11 +274,9 @@ it('previews annual collection as unavailable while a reduced draft still has ex
     $response
         ->assertOk()
         ->assertJsonPath('metrics.revenues.total_with_hotel', '2442600000.00')
-        ->assertJsonPath('metrics.annual_collection_total', null)
-        ->assertJsonPath(
-            'metrics.unavailable_reasons.annual_collections.1.residential_phase_1.0',
-            'schedule_year_outside_duration.residential_phase_1.6',
-        );
+        ->assertJsonPath('metrics.annual_collection_total', null);
+    expect($response->json('metrics.unavailable_reasons')['annual_collections.1.residential_phase_1'][0])
+        ->toBe('schedule_year_outside_duration.residential_phase_1.6');
     $this->assertDatabaseCount('projects', 0);
 });
 
@@ -301,12 +309,101 @@ it('archives an owned project', function () {
     expect($project->refresh()->status)->toBe(ProjectStatus::ARCHIVED);
 });
 
+it('renders the Arabic project dashboard from one calculation result', function () {
+    $owner = User::factory()->create(['name' => 'مالك النتائج']);
+    $project = Project::factory()->for($owner, 'owner')->create([
+        'name' => 'مشروع <script>alert("unsafe")</script>',
+        'location' => 'القاهرة الجديدة',
+        'commercial_sales_1_area' => '0',
+        'commercial_sales_2_area' => '0',
+        'commercial_construction_area' => '0',
+    ]);
+
+    $response = $this->actingAs($owner)->get(route('admin.projects.show', $project));
+
+    $response
+        ->assertOk()
+        ->assertViewIs('admin.projects.show')
+        ->assertViewHas('dashboard', static fn (array $dashboard): bool => count($dashboard['input_rows']) === 27
+            && count($dashboard['annual_collection_chart']['rows']) === 8
+            && $dashboard['cost_chart_reconciles'] === true)
+        ->assertSee('الملخص')
+        ->assertSee('المدخلات')
+        ->assertSee('الإيرادات والتحصيل')
+        ->assertSee('التكاليف')
+        ->assertSee('تفاصيل الحساب')
+        ->assertSee('2,442,600,000.00')
+        ->assertSee('852,012,000.00')
+        ->assertSee('0.0000')
+        ->assertSee('الإصدار المصحح 1: تكلفة الأرض مرة واحدة')
+        ->assertSee('&lt;script&gt;', false)
+        ->assertDontSee('<script>alert("unsafe")</script>', false);
+
+    expect(substr_count($response->getContent(), 'data-collection-year='))->toBe(8)
+        ->and(substr_count($response->getContent(), 'data-annual-result-year='))->toBe(8);
+});
+
+it('renders result years from the saved project duration', function () {
+    $owner = User::factory()->create();
+    $schedules = ProjectCollectionScheduleService::defaults(10);
+    $project = Project::factory()->for($owner, 'owner')->create([
+        'project_duration_years' => 10,
+        ...$schedules,
+    ]);
+
+    $response = $this->actingAs($owner)->get(route('admin.projects.show', $project));
+
+    $response->assertOk();
+    expect(substr_count($response->getContent(), 'data-collection-year='))->toBe(10)
+        ->and(substr_count($response->getContent(), 'data-annual-result-year='))->toBe(10);
+});
+
+it('reconciles the cost chart for the Excel source calculation version', function () {
+    $owner = User::factory()->create();
+    $project = Project::factory()->for($owner, 'owner')->create([
+        'calculation_version' => CalculationVersion::EXCEL_SOURCE_V1,
+        'land_cost' => '1000000',
+    ]);
+
+    $response = $this->actingAs($owner)->get(route('admin.projects.show', $project));
+
+    $response
+        ->assertOk()
+        ->assertViewHas('dashboard', static function (array $dashboard): bool {
+            $costKeys = array_column($dashboard['cost_chart']['items'], 'key');
+
+            return $dashboard['cost_chart_reconciles'] === true
+                && in_array('land_excel_adjustment', $costKeys, true);
+        })
+        ->assertSee('إصدار مطابقة Excel 1: تكلفة الأرض مرتان')
+        ->assertSee('إضافة الأرض لمطابقة Excel')
+        ->assertSee('هذا المشروع يستخدم إصدار مطابقة Excel الذي يضيف تكلفة الأرض مرتين إلى إجمالي التكلفة.');
+});
+
+it('shows affected missing inputs and hotel timing warnings', function () {
+    $owner = User::factory()->create();
+    $project = Project::factory()->draft()->for($owner, 'owner')->create([
+        'has_hotel' => true,
+        'hotel_revenue' => '5000000',
+        'land_area' => null,
+    ]);
+
+    $response = $this->actingAs($owner)->get(route('admin.projects.show', $project));
+
+    $response
+        ->assertOk()
+        ->assertSee('تؤثر المدخلات الناقصة التالية في بعض النتائج: مساحة الأرض.')
+        ->assertSee('غير متاح: البيانات غير مكتملة')
+        ->assertSee('إيراد الفندق داخل إجمالي الإيرادات والربح، لكنه غير موزع على سنوات التحصيل.')
+        ->assertSee('المدخل الناقص: مساحة الأرض');
+});
+
 it('forbids access to another users project', function (string $routeName) {
     $owner = User::factory()->create();
     $otherUser = User::factory()->create();
     $project = Project::factory()->for($owner, 'owner')->create();
 
-    $response = $routeName === 'admin.projects.edit'
+    $response = in_array($routeName, ['admin.projects.edit', 'admin.projects.show'], true)
         ? $this->actingAs($otherUser)->get(route($routeName, $project))
         : $this->actingAs($otherUser)->post(route($routeName, $project));
 
@@ -315,6 +412,7 @@ it('forbids access to another users project', function (string $routeName) {
     $this->assertDatabaseCount('projects', 1);
 })->with([
     'edit' => ['admin.projects.edit'],
+    'show' => ['admin.projects.show'],
     'duplicate' => ['admin.projects.duplicate'],
     'archive' => ['admin.projects.archive'],
 ]);

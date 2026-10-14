@@ -7,11 +7,13 @@ namespace App\Http\Controllers\Admin;
 use App\Enums\PermissionEnum;
 use App\Enums\ProjectStatus;
 use App\Http\Requests\Admin\ProjectRequest;
+use App\Http\Resources\Admin\Project\ProjectDashboardResource;
 use App\Http\Resources\Admin\Project\ProjectResource;
 use App\Models\Project;
 use App\Models\User;
 use App\Repositories\DTO\ProjectFilterDTO;
 use App\Repositories\ProjectRepository;
+use App\Services\ProjectCalculationService;
 use App\Services\ProjectCollectionScheduleService;
 use App\Services\ProjectService;
 use Illuminate\Contracts\View\View;
@@ -29,6 +31,7 @@ final class ProjectController extends BaseController implements HasMiddleware
     {
         return [
             self::setPermissionToController(PermissionEnum::PROJECT_LIST, ['index']),
+            self::setPermissionToController(PermissionEnum::PROJECT_VIEW, ['show']),
             self::setPermissionToController(PermissionEnum::PROJECT_CREATE, ['create']),
             self::setPermissionToController(PermissionEnum::PROJECT_EDIT, ['edit']),
             self::setPermissionToController(PermissionEnum::PROJECT_DUPLICATE, ['duplicate']),
@@ -71,10 +74,10 @@ final class ProjectController extends BaseController implements HasMiddleware
             $user = $request->user();
             abort_unless($user instanceof User, 403);
 
-            ProjectService::create(owner: $user, data: $request->validated());
+            $project = ProjectService::create(owner: $user, data: $request->validated());
 
             return redirect()
-                ->route('admin.projects.index')
+                ->route('admin.projects.show', $project)
                 ->with('status', trans('app.projects.created'));
         }
 
@@ -98,14 +101,28 @@ final class ProjectController extends BaseController implements HasMiddleware
         Gate::authorize('update', $project);
 
         if ($request->isMethod('post')) {
-            ProjectService::update(project: $project, data: $request->validated());
+            $project = ProjectService::update(project: $project, data: $request->validated());
 
             return redirect()
-                ->route('admin.projects.edit', $project)
+                ->route('admin.projects.show', $project)
                 ->with('status', trans('app.projects.updated'));
         }
 
         return view('admin.projects.edit', ['project' => $project]);
+    }
+
+    public function show(Request $request, Project $project): View
+    {
+        Gate::authorize('view', $project);
+
+        $project->loadMissing('owner');
+        $metrics = ProjectCalculationService::calculate($project);
+        $dashboard = (new ProjectDashboardResource($project, $metrics))->resolve($request);
+
+        return view('admin.projects.show', [
+            'project' => $project,
+            'dashboard' => $dashboard,
+        ]);
     }
 
     public function preview(ProjectRequest $request): JsonResponse

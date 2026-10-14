@@ -176,8 +176,310 @@ body {
     min-width: 12rem;
 }
 
+.project-meta-list > span:not(.badge) {
+    padding-inline-start: 0.75rem;
+    border-inline-start: 1px solid var(--aqar-border);
+    color: #65706e;
+    font-size: 0.9rem;
+}
+
+.project-meta-list strong {
+    color: #24312f;
+}
+
+.project-results-tabs {
+    position: sticky;
+    z-index: 20;
+    top: 0;
+    padding-block: 0.65rem;
+    background: var(--aqar-surface);
+}
+
+.project-results-tabs .nav {
+    gap: 0.5rem;
+    padding: 0.45rem;
+    border: 1px solid var(--aqar-border);
+    border-radius: 1rem;
+    background: #fff;
+    box-shadow: 0 0.4rem 1.25rem rgba(25, 55, 50, 0.06);
+}
+
+.project-results-tabs .nav-link {
+    flex: 0 0 auto;
+    color: var(--aqar-primary-dark);
+    white-space: nowrap;
+}
+
+.project-results-tabs .nav-link.active {
+    background: var(--aqar-primary);
+}
+
+.result-card {
+    padding: 1.1rem;
+    border: 1px solid var(--aqar-border);
+    border-radius: 0.9rem;
+    background: #fff;
+}
+
+.result-card-label {
+    display: block;
+    margin-bottom: 0.45rem;
+    color: #65706e;
+    font-size: 0.9rem;
+}
+
+.result-card-value {
+    color: var(--aqar-primary-dark);
+    font-size: clamp(1.15rem, 2vw, 1.55rem);
+    font-weight: 750;
+    overflow-wrap: anywhere;
+}
+
+.result-number {
+    unicode-bidi: isolate;
+    font-variant-numeric: tabular-nums;
+}
+
+.results-chart-scroll,
+.results-table-scroll {
+    scrollbar-width: thin;
+}
+
+.annual-chart {
+    display: flex;
+    min-width: 42rem;
+    height: 22rem;
+    align-items: stretch;
+    gap: 0.75rem;
+    padding-top: 2.25rem;
+    border-bottom: 1px solid var(--aqar-border);
+}
+
+.annual-chart-column {
+    display: flex;
+    min-width: 4.4rem;
+    flex: 1 0 4.4rem;
+    flex-direction: column;
+    justify-content: flex-end;
+    text-align: center;
+}
+
+.annual-chart-total {
+    min-height: 2rem;
+    color: #65706e;
+    font-size: 0.72rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.annual-chart-track {
+    display: flex;
+    height: 15rem;
+    align-items: flex-end;
+    justify-content: center;
+    border-radius: 0.5rem 0.5rem 0 0;
+    background: repeating-linear-gradient(to top, transparent 0, transparent calc(25% - 1px), rgba(23, 79, 71, 0.08) 25%);
+}
+
+.annual-chart-stack {
+    display: flex;
+    width: min(3rem, 70%);
+    height: var(--bar-height);
+    min-height: 0.2rem;
+    flex-direction: column-reverse;
+    overflow: hidden;
+    border-radius: 0.45rem 0.45rem 0 0;
+    box-shadow: 0 0.25rem 0.75rem rgba(25, 55, 50, 0.12);
+}
+
+.annual-chart-stack .chart-segment {
+    display: block;
+    height: var(--segment-size);
+    min-height: 1px;
+}
+
+.annual-chart-label {
+    min-height: 2.6rem;
+    padding-top: 0.55rem;
+    font-size: 0.82rem;
+    font-weight: 650;
+}
+
+.chart-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem 1rem;
+    font-size: 0.78rem;
+}
+
+.chart-legend span,
+.cost-legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.chart-legend i,
+.cost-legend-item i {
+    display: inline-block;
+    width: 0.75rem;
+    height: 0.75rem;
+    flex: 0 0 0.75rem;
+    border-radius: 0.2rem;
+}
+
+.cost-chart {
+    display: flex;
+    min-height: 3rem;
+    overflow: hidden;
+    border: 1px solid var(--aqar-border);
+    border-radius: 0.65rem;
+    background: #eef0ec;
+}
+
+.cost-chart .chart-segment {
+    width: var(--segment-size);
+    min-width: 1px;
+}
+
+.cost-legend {
+    display: grid;
+    gap: 0.25rem;
+}
+
+.cost-legend-item {
+    width: 100%;
+    padding: 0.4rem 0;
+    border: 0;
+    border-bottom: 1px solid var(--aqar-border);
+    background: transparent;
+    color: inherit;
+    text-align: start;
+}
+
+.cost-legend-item span {
+    flex-grow: 1;
+}
+
+.chart-color-0 { background: #174f47; }
+.chart-color-1 { background: #2f796d; }
+.chart-color-2 { background: #6da899; }
+.chart-color-3 { background: #c9973e; }
+.chart-color-4 { background: #e6bb66; }
+.chart-color-5 { background: #704b3b; }
+.chart-color-6 { background: #9a6b54; }
+.chart-color-7 { background: #4c5f77; }
+.chart-color-8 { background: #7b8fa7; }
+.chart-color-9 { background: #b66b61; }
+
+.phase-share-cell {
+    min-width: 11rem;
+}
+
+.phase-share-track {
+    display: block;
+    width: 100%;
+    height: 0.35rem;
+    margin-top: 0.35rem;
+    overflow: hidden;
+    border-radius: 999px;
+    background: #e8ebe7;
+}
+
+.phase-share-track > span {
+    display: block;
+    width: var(--phase-share);
+    height: 100%;
+    border-radius: inherit;
+    background: var(--aqar-accent);
+}
+
+.collection-results-table,
+.annual-results-table,
+.calculation-details-table {
+    min-width: max-content;
+}
+
+.collection-results-table th,
+.collection-results-table td,
+.annual-results-table th,
+.annual-results-table td {
+    min-width: 9rem;
+    white-space: nowrap;
+}
+
+.sticky-result-label {
+    position: sticky;
+    z-index: 2;
+    right: 0;
+    min-width: 12rem !important;
+    background: #fff;
+}
+
+thead .sticky-result-label,
+tfoot .sticky-result-label {
+    z-index: 3;
+    background: var(--bs-table-bg);
+}
+
+.result-type-input {
+    background: #e7f2ef;
+    color: var(--aqar-primary-dark);
+}
+
+.result-type-computed {
+    background: #e9eef5;
+    color: #334d68;
+}
+
+.result-type-assumption {
+    background: #fff0c9;
+    color: #6b4d00;
+}
+
+.calculation-filters {
+    width: min(100%, 34rem);
+}
+
+.calculation-details-table td,
+.calculation-details-table th {
+    max-width: 28rem;
+}
+
+.calculation-formula {
+    min-width: 20rem;
+    white-space: normal;
+}
+
+.result-row-highlight > * {
+    animation: result-row-highlight 1.8s ease-out;
+}
+
+@keyframes result-row-highlight {
+    0%, 35% { background-color: #fff0c9; }
+    100% { background-color: transparent; }
+}
+
 @media (max-width: 575.98px) {
     .display-5 {
         font-size: 2rem;
+    }
+
+    .project-meta-list {
+        align-items: flex-start !important;
+        flex-direction: column;
+    }
+
+    .project-meta-list > span:not(.badge) {
+        padding-inline-start: 0;
+        border-inline-start: 0;
+    }
+
+    .project-results-tabs {
+        margin-inline: -0.75rem;
+        padding-inline: 0.75rem;
+    }
+
+    .result-card-value {
+        font-size: 1.1rem;
     }
 }

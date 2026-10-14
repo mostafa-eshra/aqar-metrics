@@ -29,6 +29,7 @@ Route::middleware(['auth', EnsureUserIsActive::class])
             Route::match(['get', 'post'], '/{project}/edit', [ProjectController::class, 'edit'])->name('edit');
             Route::post('/{project}/duplicate', [ProjectController::class, 'duplicate'])->name('duplicate');
             Route::post('/{project}/archive', [ProjectController::class, 'archive'])->name('archive');
+            Route::get('/{project}', [ProjectController::class, 'show'])->name('show');
         });
 
         Route::prefix('users')->name('users.')->group(function (): void {

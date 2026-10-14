@@ -52,6 +52,14 @@ class ProjectResource extends JsonResource
         $user = $request->user();
         $actions = [];
 
+        if ($user?->can('view', $project)) {
+            $actions[] = sprintf(
+                '<a class="btn btn-sm btn-aqar" href="%s">%s</a>',
+                e(route('admin.projects.show', $project)),
+                e(trans('app.projects.view')),
+            );
+        }
+
         if ($user?->can('update', $project)) {
             $actions[] = sprintf(
                 '<a class="btn btn-sm btn-outline-secondary" href="%s">%s</a>',
