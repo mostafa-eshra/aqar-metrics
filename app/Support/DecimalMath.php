@@ -9,6 +9,20 @@ use Brick\Math\RoundingMode;
 
 final class DecimalMath
 {
+    public static function add(string $augend, string $addend, int $scale = 2): string
+    {
+        return (string) BigDecimal::of($augend)
+            ->plus($addend)
+            ->toScale($scale, RoundingMode::HalfUp);
+    }
+
+    public static function subtract(string $minuend, string $subtrahend, int $scale = 2): string
+    {
+        return (string) BigDecimal::of($minuend)
+            ->minus($subtrahend)
+            ->toScale($scale, RoundingMode::HalfUp);
+    }
+
     public static function multiply(string $multiplicand, string $multiplier, int $scale = 2): string
     {
         return (string) BigDecimal::of($multiplicand)
@@ -27,6 +41,23 @@ final class DecimalMath
         return (string) BigDecimal::of($amount)
             ->multipliedBy($percent)
             ->dividedBy('100', $scale, RoundingMode::HalfUp);
+    }
+
+    public static function ratioPercentage(string $numerator, string $denominator, int $scale = 2): string
+    {
+        return (string) BigDecimal::of($numerator)
+            ->multipliedBy('100')
+            ->dividedBy($denominator, $scale, RoundingMode::HalfUp);
+    }
+
+    public static function compare(string $left, string $right): int
+    {
+        return BigDecimal::of($left)->compareTo($right);
+    }
+
+    public static function isZero(string $value): bool
+    {
+        return BigDecimal::of($value)->isZero();
     }
 
     /** @param list<string> $values */
