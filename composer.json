@@ -9,12 +9,17 @@
     ],
     "license": "MIT",
     "require": {
-        "php": "^8.3",
-        "laravel/framework": "^13.17",
-        "laravel/tinker": "^3.0"
+        "php": "^8.5",
+        "brick/math": "^1.0",
+        "laravel/framework": "^13.0",
+        "laravel/telescope": "^5.26",
+        "laravel/tinker": "^3.0",
+        "yajra/laravel-datatables-fractal": "^13.0"
     },
     "require-dev": {
+        "barryvdh/laravel-ide-helper": "^3.7",
         "fakerphp/faker": "^1.23",
+        "fruitcake/laravel-debugbar": "^4.4",
         "laravel/boost": "^2.2",
         "laravel/pail": "^1.2.5",
         "laravel/pao": "^1.0.6",

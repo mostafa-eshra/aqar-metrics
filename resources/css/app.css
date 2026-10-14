@@ -1,9 +1,67 @@
-@import 'tailwindcss';
+@import 'bootstrap/dist/css/bootstrap.rtl.min.css';
 
-@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
-@source '../../storage/framework/views/*.php';
+:root {
+    color-scheme: light;
+    --aqar-primary: #174f47;
+    --aqar-primary-dark: #103b35;
+    --aqar-accent: #c9973e;
+    --aqar-surface: #f7f5ef;
+    --aqar-border: #e4dfd2;
+}
 
-@theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+body {
+    min-height: 100vh;
+    background: var(--aqar-surface);
+    color: #24312f;
+    font-family: "Noto Sans Arabic", "Segoe UI", Tahoma, sans-serif;
+}
+
+.app-navbar {
+    background: linear-gradient(135deg, var(--aqar-primary-dark), var(--aqar-primary));
+}
+
+.brand-mark {
+    display: inline-grid;
+    width: 2.25rem;
+    height: 2.25rem;
+    place-items: center;
+    border-radius: 0.75rem;
+    background: var(--aqar-accent);
+    color: #182522;
+    font-weight: 800;
+}
+
+.page-shell {
+    max-width: 1180px;
+}
+
+.foundation-card {
+    border: 1px solid var(--aqar-border);
+    border-radius: 1rem;
+    box-shadow: 0 1rem 2.75rem rgba(25, 55, 50, 0.08);
+}
+
+.decision-card {
+    height: 100%;
+    border-color: var(--aqar-border);
+    border-radius: 0.85rem;
+}
+
+.decision-card .badge {
+    background: #e7f2ef;
+    color: var(--aqar-primary-dark);
+}
+
+.text-aqar {
+    color: var(--aqar-primary);
+}
+
+.bg-aqar-soft {
+    background: #eef5f2;
+}
+
+@media (max-width: 575.98px) {
+    .display-5 {
+        font-size: 2rem;
+    }
 }
