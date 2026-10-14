@@ -165,6 +165,27 @@ it('calculates every saved year and preserves the source totals when zero years 
         ->and($metrics->unavailableReasons)->toBe([]);
 });
 
+it('keeps revenue cost and profit unchanged when only the valid collection duration changes', function (int $durationYears) {
+    $project = makeCalculationProject([
+        'project_duration_years' => $durationYears,
+        ...calculationScheduleForDuration($durationYears),
+    ]);
+
+    $metrics = ProjectCalculationService::calculate($project);
+
+    expect($metrics->annualCollections)->toHaveCount($durationYears)
+        ->and($metrics->annualCollectionTotal)->toBe('2442600000.00')
+        ->and($metrics->revenues['total_with_hotel'])->toBe('2442600000.00')
+        ->and($metrics->totals['total_cost'])->toBe('1590588000.00')
+        ->and($metrics->totals['estimated_profit'])->toBe('852012000.00')
+        ->and($metrics->unavailableReasons)->toBe([]);
+})->with([
+    'one year' => 1,
+    'five years' => 5,
+    'source eight years' => 8,
+    'ten years' => 10,
+]);
+
 it('returns precise dependency reasons for missing inputs and invalid collection schedules', function () {
     $residentialSchedule = makeCalculationProject()->residential_collection_schedule;
     unset($residentialSchedule['residential_phase_1'][8]);
@@ -331,4 +352,26 @@ function makeCalculationProject(array $overrides = []): Project
     ]);
 
     return $project;
+}
+
+/** @return array<string, array<string, array<int, string>>> */
+function calculationScheduleForDuration(int $durationYears): array
+{
+    $percentages = [];
+
+    for ($year = 1; $year <= $durationYears; $year++) {
+        $percentages[$year] = $year === $durationYears ? '100' : '0';
+    }
+
+    return [
+        'residential_collection_schedule' => [
+            'residential_phase_1' => $percentages,
+            'residential_phase_2' => $percentages,
+            'residential_phase_3' => $percentages,
+        ],
+        'commercial_collection_schedule' => [
+            'commercial_group_1' => $percentages,
+            'commercial_group_2' => $percentages,
+        ],
+    ];
 }

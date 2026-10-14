@@ -20,23 +20,6 @@
     </div>
 </div>
 
-@php
-    $residentialSchedule = old('residential_collection_schedule', $project->residential_collection_schedule ?? []);
-    $commercialSchedule = old('commercial_collection_schedule', $project->commercial_collection_schedule ?? []);
-@endphp
-
-@foreach ($residentialSchedule as $group => $yearPercentages)
-    @foreach ($yearPercentages as $year => $percentage)
-        <input type="hidden" name="residential_collection_schedule[{{ $group }}][{{ $year }}]" value="{{ $percentage }}">
-    @endforeach
-@endforeach
-
-@foreach ($commercialSchedule as $group => $yearPercentages)
-    @foreach ($yearPercentages as $year => $percentage)
-        <input type="hidden" name="commercial_collection_schedule[{{ $group }}][{{ $year }}]" value="{{ $percentage }}">
-    @endforeach
-@endforeach
-
 <section class="project-form-section" aria-labelledby="basic-heading">
     <h2 class="h5 text-aqar" id="basic-heading">{{ __('app.projects.sections.basic') }}</h2>
     <div class="row g-3">
@@ -128,6 +111,8 @@
     </div>
 </section>
 
+@include('admin.projects._collection_schedule', ['project' => $project])
+
 <section class="project-form-section" aria-labelledby="land-heading">
     <h2 class="h5 text-aqar" id="land-heading">{{ __('app.projects.sections.land') }}</h2>
     <div class="row g-3">
@@ -213,5 +198,30 @@
                 </div>
             </div>
         @endforeach
+    </div>
+    <div class="alert alert-warning d-none mt-3 mb-0" id="preview-schedule-warning" role="alert">
+        {{ __('app.projects.preview.annual_collection_unavailable') }}
+    </div>
+    <div class="mt-4 d-none" id="preview-annual-collection">
+        <h3 class="h6 mb-1">{{ __('app.projects.preview.annual_collection_title') }}</h3>
+        <p class="text-secondary small">{{ __('app.projects.preview.annual_collection_description') }}</p>
+        <div class="table-responsive border rounded-3">
+            <table class="table table-sm align-middle mb-0 annual-collection-table">
+                <thead class="table-light">
+                    <tr>
+                        <th scope="col">{{ __('app.projects.preview.year') }}</th>
+                        <th class="text-end" scope="col">{{ __('app.projects.preview.year_collection') }}</th>
+                        <th class="text-end" scope="col">{{ __('app.projects.preview.cumulative_collection') }}</th>
+                    </tr>
+                </thead>
+                <tbody id="preview-annual-collection-body"></tbody>
+                <tfoot>
+                    <tr class="table-light fw-semibold">
+                        <th scope="row">{{ __('app.projects.preview.collection_total') }}</th>
+                        <td class="text-end" colspan="2" id="preview-annual-collection-total">—</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
     </div>
 </section>

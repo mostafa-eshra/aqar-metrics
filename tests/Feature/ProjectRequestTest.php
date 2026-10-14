@@ -110,6 +110,46 @@ it('requires every completed collection schedule to match the saved duration', f
         ]);
 });
 
+it('accepts completed collection schedules for supported dynamic durations', function (int $durationYears) {
+    $user = User::factory()->make(['id' => 1]);
+    $data = completeProjectRequestData();
+    $data['project_duration_years'] = $durationYears;
+    $data = [...$data, ...collectionScheduleForDuration($durationYears)];
+
+    $this->actingAs($user)
+        ->postJson('/_testing/projects', $data)
+        ->assertOk()
+        ->assertJsonPath('project_duration_years', $durationYears);
+})->with([
+    'one year' => 1,
+    'five years' => 5,
+    'source eight years' => 8,
+    'ten years' => 10,
+]);
+
+it('allows excluded positive collection years in a draft but rejects them for a completed project', function () {
+    $user = User::factory()->make(['id' => 1]);
+    $draftData = completeProjectRequestData();
+    $draftData['project_duration_years'] = 5;
+    $draftData['status'] = ProjectStatus::DRAFT->value;
+
+    $this->actingAs($user)
+        ->postJson('/_testing/projects', $draftData)
+        ->assertOk()
+        ->assertJsonPath('residential_collection_schedule.residential_phase_1.5', '10')
+        ->assertJsonPath('residential_collection_schedule.residential_phase_1.6', '10');
+
+    $draftData['status'] = ProjectStatus::COMPLETED->value;
+
+    $this->actingAs($user)
+        ->postJson('/_testing/projects', $draftData)
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors([
+            'residential_collection_schedule.residential_phase_1',
+            'commercial_collection_schedule.commercial_group_1',
+        ]);
+});
+
 /** @return array<string, mixed> */
 function completeProjectRequestData(): array
 {
@@ -147,5 +187,27 @@ function completeProjectRequestData(): array
         'design_supervision_percent' => '2.5',
         'hotel_revenue' => '0',
         ...ProjectCollectionScheduleService::defaults(8),
+    ];
+}
+
+/** @return array<string, array<string, array<int, string>>> */
+function collectionScheduleForDuration(int $durationYears): array
+{
+    $percentages = [];
+
+    for ($year = 1; $year <= $durationYears; $year++) {
+        $percentages[$year] = $year === $durationYears ? '100' : '0';
+    }
+
+    return [
+        'residential_collection_schedule' => [
+            'residential_phase_1' => $percentages,
+            'residential_phase_2' => $percentages,
+            'residential_phase_3' => $percentages,
+        ],
+        'commercial_collection_schedule' => [
+            'commercial_group_1' => $percentages,
+            'commercial_group_2' => $percentages,
+        ],
     ];
 }

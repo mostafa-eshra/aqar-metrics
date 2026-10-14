@@ -7,6 +7,7 @@ namespace App\Http\Requests\Admin;
 use App\Enums\ProjectStatus;
 use App\Models\Project;
 use App\Models\User;
+use App\Services\ProjectCollectionScheduleService;
 use Brick\Math\BigDecimal;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -14,17 +15,6 @@ use Illuminate\Validation\Validator;
 
 final class ProjectRequest extends FormRequest
 {
-    private const array RESIDENTIAL_GROUPS = [
-        'residential_phase_1',
-        'residential_phase_2',
-        'residential_phase_3',
-    ];
-
-    private const array COMMERCIAL_GROUPS = [
-        'commercial_group_1',
-        'commercial_group_2',
-    ];
-
     public function authorize(): bool
     {
         $user = $this->user();
@@ -59,11 +49,11 @@ final class ProjectRequest extends FormRequest
             'has_hotel' => ['required', 'boolean'],
             'residential_collection_schedule' => [
                 $requiredWhenCompleted,
-                'array:'.implode(',', self::RESIDENTIAL_GROUPS),
+                'array:'.implode(',', ProjectCollectionScheduleService::RESIDENTIAL_GROUPS),
             ],
             'commercial_collection_schedule' => [
                 $requiredWhenCompleted,
-                'array:'.implode(',', self::COMMERCIAL_GROUPS),
+                'array:'.implode(',', ProjectCollectionScheduleService::COMMERCIAL_GROUPS),
             ],
         ];
 
@@ -85,13 +75,13 @@ final class ProjectRequest extends FormRequest
         $this->addCollectionScheduleRules(
             rules: $rules,
             scheduleField: 'residential_collection_schedule',
-            groups: self::RESIDENTIAL_GROUPS,
+            groups: ProjectCollectionScheduleService::RESIDENTIAL_GROUPS,
             required: $isCompleted,
         );
         $this->addCollectionScheduleRules(
             rules: $rules,
             scheduleField: 'commercial_collection_schedule',
-            groups: self::COMMERCIAL_GROUPS,
+            groups: ProjectCollectionScheduleService::COMMERCIAL_GROUPS,
             required: $isCompleted,
         );
 
@@ -109,12 +99,12 @@ final class ProjectRequest extends FormRequest
             $this->validateScheduleYearKeys(
                 validator: $validator,
                 scheduleField: 'residential_collection_schedule',
-                groups: self::RESIDENTIAL_GROUPS,
+                groups: ProjectCollectionScheduleService::RESIDENTIAL_GROUPS,
             );
             $this->validateScheduleYearKeys(
                 validator: $validator,
                 scheduleField: 'commercial_collection_schedule',
-                groups: self::COMMERCIAL_GROUPS,
+                groups: ProjectCollectionScheduleService::COMMERCIAL_GROUPS,
             );
 
             if ($validator->errors()->isNotEmpty() || $this->input('status') !== ProjectStatus::COMPLETED->value) {
@@ -125,12 +115,12 @@ final class ProjectRequest extends FormRequest
             $this->validateCollectionSchedule(
                 validator: $validator,
                 scheduleField: 'residential_collection_schedule',
-                groups: self::RESIDENTIAL_GROUPS,
+                groups: ProjectCollectionScheduleService::RESIDENTIAL_GROUPS,
             );
             $this->validateCollectionSchedule(
                 validator: $validator,
                 scheduleField: 'commercial_collection_schedule',
-                groups: self::COMMERCIAL_GROUPS,
+                groups: ProjectCollectionScheduleService::COMMERCIAL_GROUPS,
             );
         }];
     }

@@ -115,6 +115,47 @@ body {
     display: block;
 }
 
+.collection-schedule-block + .collection-schedule-block {
+    margin-top: 1.5rem;
+}
+
+.collection-schedule-table {
+    min-width: max-content;
+}
+
+.collection-schedule-table th:first-child {
+    min-width: 10.5rem;
+}
+
+.collection-schedule-table td {
+    min-width: 8rem;
+}
+
+.collection-schedule-table td:last-child {
+    min-width: 6rem;
+}
+
+.schedule-percentage-input {
+    width: 7rem;
+}
+
+.excluded-years-group + .excluded-years-group {
+    padding-top: 1rem;
+    margin-top: 1rem;
+    border-top: 1px solid rgba(102, 77, 3, 0.2);
+}
+
+.excluded-year-value {
+    padding: 0.35rem 0.6rem;
+    border: 1px solid rgba(102, 77, 3, 0.2);
+    border-radius: 0.5rem;
+    background: rgba(255, 255, 255, 0.55);
+}
+
+.annual-collection-table {
+    min-width: 34rem;
+}
+
 .preview-metric span {
     margin-bottom: 0.35rem;
     color: #65706e;

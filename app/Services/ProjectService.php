@@ -23,6 +23,7 @@ final class ProjectService
 
         $attributes['residential_collection_schedule'] ??= $defaultSchedules['residential_collection_schedule'];
         $attributes['commercial_collection_schedule'] ??= $defaultSchedules['commercial_collection_schedule'];
+        self::adjustCollectionSchedules($attributes, $durationYears);
 
         self::applyHotelChoice($attributes);
 
@@ -37,6 +38,16 @@ final class ProjectService
     public static function update(Project $project, array $data): Project
     {
         $attributes = self::persistableAttributes($project, $data);
+        $durationYears = (int) ($attributes['project_duration_years'] ?? $project->project_duration_years);
+
+        if (array_key_exists('project_duration_years', $attributes)
+            || array_key_exists('residential_collection_schedule', $attributes)
+            || array_key_exists('commercial_collection_schedule', $attributes)) {
+            $attributes['residential_collection_schedule'] ??= $project->residential_collection_schedule ?? [];
+            $attributes['commercial_collection_schedule'] ??= $project->commercial_collection_schedule ?? [];
+            self::adjustCollectionSchedules($attributes, $durationYears);
+        }
+
         self::applyHotelChoice($attributes);
 
         return ProjectRepository::update($project, $attributes);
@@ -52,6 +63,7 @@ final class ProjectService
 
         $attributes['residential_collection_schedule'] ??= $defaultSchedules['residential_collection_schedule'];
         $attributes['commercial_collection_schedule'] ??= $defaultSchedules['commercial_collection_schedule'];
+        self::adjustCollectionSchedules($attributes, $durationYears);
 
         self::applyHotelChoice($attributes);
 
@@ -105,6 +117,23 @@ final class ProjectService
         if (array_key_exists('has_hotel', $attributes) && $attributes['has_hotel'] === false) {
             $attributes['hotel_construction_area'] = '0';
             $attributes['hotel_revenue'] = '0';
+        }
+    }
+
+    /** @param array<string, mixed> $attributes */
+    private static function adjustCollectionSchedules(array &$attributes, int $durationYears): void
+    {
+        foreach (['residential_collection_schedule', 'commercial_collection_schedule'] as $scheduleField) {
+            $schedule = $attributes[$scheduleField] ?? [];
+
+            if (! is_array($schedule)) {
+                continue;
+            }
+
+            $attributes[$scheduleField] = ProjectCollectionScheduleService::forDuration(
+                schedule: $schedule,
+                durationYears: $durationYears,
+            );
         }
     }
 }

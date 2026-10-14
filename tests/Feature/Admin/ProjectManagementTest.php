@@ -29,6 +29,9 @@ it('renders the project list and create form for an active user', function () {
         ->assertSee('إنشاء مشروع')
         ->assertSee('name="land_area"', false)
         ->assertSee('name="hotel_revenue"', false)
+        ->assertSee('عمر المشروع وجدول التحصيل')
+        ->assertSee('name="residential_collection_schedule[residential_phase_1][1]"', false)
+        ->assertSee('data-schedule-input', false)
         ->assertDontSee('type="file"', false);
 });
 
@@ -189,7 +192,83 @@ it('previews calculations without saving a project', function () {
         ->assertJsonPath('saved', false)
         ->assertJsonPath('currency_code', 'EGP')
         ->assertJsonPath('metrics.revenues.total_with_hotel', '2442600000.00')
-        ->assertJsonPath('metrics.totals.estimated_profit', '852012000.00');
+        ->assertJsonPath('metrics.totals.estimated_profit', '852012000.00')
+        ->assertJsonCount(8, 'metrics.annual_collections')
+        ->assertJsonPath('metrics.annual_collection_total', '2442600000.00');
+    $this->assertDatabaseCount('projects', 0);
+});
+
+it('adds zero collection years when a draft duration increases from eight to ten years', function () {
+    $owner = User::factory()->create();
+    $project = Project::factory()->draft()->for($owner, 'owner')->create();
+
+    $response = $this->actingAs($owner)->post(route('admin.projects.edit', $project), [
+        'name' => $project->name,
+        'project_duration_years' => 10,
+        'status' => ProjectStatus::DRAFT->value,
+        'has_hotel' => '0',
+    ]);
+
+    $response->assertRedirect(route('admin.projects.edit', $project));
+
+    $project->refresh();
+
+    expect($project->project_duration_years)->toBe(10)
+        ->and($project->residential_collection_schedule['residential_phase_1'][9])->toBe('0')
+        ->and($project->residential_collection_schedule['residential_phase_1'][10])->toBe('0')
+        ->and($project->commercial_collection_schedule['commercial_group_2'][9])->toBe('0')
+        ->and($project->commercial_collection_schedule['commercial_group_2'][10])->toBe('0');
+});
+
+it('keeps positive excluded years visible after reducing a draft from eight to five years', function () {
+    $owner = User::factory()->create();
+    $project = Project::factory()->draft()->for($owner, 'owner')->create();
+
+    $response = $this->actingAs($owner)->post(route('admin.projects.edit', $project), [
+        'name' => $project->name,
+        'project_duration_years' => 5,
+        'status' => ProjectStatus::DRAFT->value,
+        'has_hotel' => '0',
+    ]);
+
+    $response->assertRedirect(route('admin.projects.edit', $project));
+
+    $project->refresh();
+
+    expect($project->project_duration_years)->toBe(5)
+        ->and($project->residential_collection_schedule['residential_phase_1'])->toBe([
+            1 => '25',
+            2 => '15',
+            3 => '15',
+            4 => '25',
+            5 => '10',
+            6 => '10',
+        ])
+        ->and($project->commercial_collection_schedule['commercial_group_2'][8])->toBe('15');
+
+    $this->actingAs($owner)
+        ->get(route('admin.projects.edit', $project))
+        ->assertOk()
+        ->assertSee('توجد نسب تحصيل خارج مدة المشروع الجديدة.')
+        ->assertSee('name="residential_collection_schedule[residential_phase_1][6]"', false);
+});
+
+it('previews annual collection as unavailable while a reduced draft still has excluded percentages', function () {
+    $owner = User::factory()->create();
+    $data = completeProjectFormData();
+    $data['project_duration_years'] = 5;
+    $data['status'] = ProjectStatus::DRAFT->value;
+
+    $response = $this->actingAs($owner)->postJson(route('admin.projects.preview'), $data);
+
+    $response
+        ->assertOk()
+        ->assertJsonPath('metrics.revenues.total_with_hotel', '2442600000.00')
+        ->assertJsonPath('metrics.annual_collection_total', null)
+        ->assertJsonPath(
+            'metrics.unavailable_reasons.annual_collections.1.residential_phase_1.0',
+            'schedule_year_outside_duration.residential_phase_1.6',
+        );
     $this->assertDatabaseCount('projects', 0);
 });
 
