@@ -229,7 +229,7 @@ it('previews calculations without saving a project', function () {
         ->assertJsonPath('saved', false)
         ->assertJsonPath('currency_code', 'EGP')
         ->assertJsonPath('metrics.revenues.total_with_hotel', '2442600000.00')
-        ->assertJsonPath('metrics.totals.estimated_profit', '852012000.00')
+        ->assertJsonPath('metrics.totals.estimated_profit', '821997000.00')
         ->assertJsonCount(8, 'metrics.annual_collections')
         ->assertJsonPath('metrics.annual_collection_total', '2442600000.00');
     $this->assertDatabaseCount('projects', 0);
@@ -381,9 +381,11 @@ it('renders the Arabic project dashboard from one calculation result', function 
         ->assertSee('التكاليف')
         ->assertSee('تفاصيل الحساب')
         ->assertSee('2,442,600,000.00')
-        ->assertSee('852,012,000.00')
+        ->assertSee('821,997,000.00')
         ->assertSee('0.0000')
         ->assertSee('الإصدار المصحح 1: تكلفة الأرض مرة واحدة')
+        ->assertSee('إجمالي الإيرادات × نسبة التسويق ÷ 100')
+        ->assertSee('تُحتسب تكاليف التسويق والبيع والإدارة والتصاميم والإشراف كنسبة من إجمالي الإيرادات، بما فيها إيراد الفندق عند وجوده.')
         ->assertSee('&lt;script&gt;', false)
         ->assertDontSee('<script>alert("unsafe")</script>', false);
 
@@ -425,6 +427,8 @@ it('reconciles the cost chart for the Excel source calculation version', functio
         })
         ->assertSee('إصدار مطابقة Excel 1: تكلفة الأرض مرتان')
         ->assertSee('إضافة الأرض لمطابقة Excel')
+        ->assertSee('إجمالي السكني والتجاري × نسبة التسويق ÷ 100')
+        ->assertSee('إجمالي الإنشاء × نسبة التصاميم والإشراف ÷ 100')
         ->assertSee('هذا المشروع يستخدم إصدار مطابقة Excel الذي يضيف تكلفة الأرض مرتين إلى إجمالي التكلفة.');
 });
 

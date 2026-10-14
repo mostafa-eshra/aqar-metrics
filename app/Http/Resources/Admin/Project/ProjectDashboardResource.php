@@ -575,10 +575,29 @@ final class ProjectDashboardResource extends JsonResource
             'unit_label' => $this->unitLabel($unit),
             'type' => 'computed',
             'type_label' => trans('app.projects.results.types.computed'),
-            'formula' => $withFormula ? trans("app.projects.results.formulas.{$key}") : null,
+            'formula' => $withFormula
+                ? trans('app.projects.results.formulas.'.$this->formulaKey($key))
+                : null,
             'is_available' => $value !== null,
             'reasons' => $this->reasonMessages($path),
         ];
+    }
+
+    private function formulaKey(string $key): string
+    {
+        if (
+            $this->projectMetrics->calculationVersion === CalculationVersion::EXCEL_SOURCE_V1
+            && in_array($key, [
+                'marketing_expense',
+                'sales_expense',
+                'administration_expense',
+                'design_supervision_expense',
+            ], true)
+        ) {
+            return "{$key}_excel_source";
+        }
+
+        return $key;
     }
 
     /** @return array<string, mixed> */

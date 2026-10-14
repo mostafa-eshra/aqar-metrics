@@ -33,7 +33,7 @@ it('completes the first-version project workflow without losing inputs or changi
         ->assertOk()
         ->assertJsonPath('saved', false)
         ->assertJsonPath('metrics.revenues.total_with_hotel', '2442600000.00')
-        ->assertJsonPath('metrics.totals.estimated_profit', '852012000.00')
+        ->assertJsonPath('metrics.totals.estimated_profit', '821997000.00')
         ->assertJsonPath('metrics.annual_collection_total', '2442600000.00');
     $this->assertDatabaseCount('projects', 0);
 
@@ -53,7 +53,7 @@ it('completes the first-version project workflow without losing inputs or changi
     $this->get(route('admin.projects.show', $project))
         ->assertOk()
         ->assertSee('2,442,600,000.00')
-        ->assertSee('852,012,000.00');
+        ->assertSee('821,997,000.00');
 
     $this->get(route('admin.projects.edit', $project))
         ->assertOk()
@@ -84,7 +84,7 @@ it('completes the first-version project workflow without losing inputs or changi
     $this->get(route('admin.projects.show', $project))
         ->assertOk()
         ->assertSee('2,525,400,000.00')
-        ->assertSee('924,048,000.00');
+        ->assertSee('891,963,000.00');
 
     $this->post(route('logout'))->assertRedirect(route('login'));
     $this->assertGuest();

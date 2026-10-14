@@ -154,23 +154,30 @@ final class ProjectCalculationService
             'total' => self::record($unavailableReasons, 'construction_costs.total', $constructionCostTotal),
         ];
 
+        $percentageExpenseBase = $calculationVersion === CalculationVersion::EXCEL_SOURCE_V1
+            ? $residentialAndCommercialRevenueTotal
+            : $totalRevenueWithHotel;
+        $designSupervisionExpenseBase = $calculationVersion === CalculationVersion::EXCEL_SOURCE_V1
+            ? $constructionCostTotal
+            : $totalRevenueWithHotel;
+
         $marketingExpense = self::percentage(
-            $residentialAndCommercialRevenueTotal,
+            $percentageExpenseBase,
             self::input($project, 'marketing_percent'),
             $moneyScale,
         );
         $salesExpense = self::percentage(
-            $residentialAndCommercialRevenueTotal,
+            $percentageExpenseBase,
             self::input($project, 'sales_percent'),
             $moneyScale,
         );
         $administrationExpense = self::percentage(
-            $residentialAndCommercialRevenueTotal,
+            $percentageExpenseBase,
             self::input($project, 'administration_percent'),
             $moneyScale,
         );
         $designSupervisionExpense = self::percentage(
-            $constructionCostTotal,
+            $designSupervisionExpenseBase,
             self::input($project, 'design_supervision_percent'),
             $moneyScale,
         );
@@ -280,7 +287,9 @@ final class ProjectCalculationService
                     ? 'land_cost_counted_twice_for_excel_compatibility'
                     : 'land_cost_counted_once',
                 'hotel_revenue_not_distributed_annually',
-                'marketing_sales_administration_base_excludes_hotel_revenue',
+                $calculationVersion === CalculationVersion::EXCEL_SOURCE_V1
+                    ? 'excel_source_percentage_expense_bases'
+                    : 'percentage_expense_base_is_total_revenue',
                 'annual_collection_rounding_reconciled_to_group_revenue',
             ],
         );

@@ -71,7 +71,7 @@ it('runs sensitivity cases on temporary copies without changing the saved input 
     expect($project->residential_phase_1_price_per_sqm)->toBe('80000.00')
         ->and($rows)->toHaveCount(3)
         ->and($rows[0]['input_value'])->toBe('72000.00')
-        ->and($rows[1]['estimated_profit'])->toBe('852012000.00')
+        ->and($rows[1]['estimated_profit'])->toBe('821997000.00')
         ->and($rows[2]['input_value'])->toBe('88000.00');
 });
 
@@ -94,7 +94,7 @@ it('exports a valid Excel workbook with inputs results and cash flow sheets', fu
 
     expect($opened)->toBeTrue()
         ->and($workbook)->toContain('المدخلات', 'النتائج', 'التدفقات النقدية')
-        ->and($results)->toContain('852012000.00', 'flexible-phases-v2');
+        ->and($results)->toContain('821997000.00', 'flexible-phases-v2');
 });
 
 /** @param array<string, mixed> $overrides */

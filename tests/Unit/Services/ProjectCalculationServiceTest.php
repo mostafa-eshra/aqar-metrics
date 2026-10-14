@@ -39,6 +39,7 @@ it('matches all 66 calculated cells in the eight-year source workbook', function
             'commercial_group_2' => '0.00',
         ])
         ->and($metrics->annualCollectionTotal)->toBe('2442600000.00')
+        ->and($metrics->calculationNotes)->toContain('excel_source_percentage_expense_bases')
         ->and($metrics->unavailableReasons)->toBe([]);
 });
 
@@ -69,8 +70,8 @@ it('documents the land cost difference between corrected and source-compatible v
 
     expect($correctedMetrics->totals)
         ->toBe([
-            'total_cost' => '1591588000.00',
-            'estimated_profit' => '851012000.00',
+            'total_cost' => '1621603000.00',
+            'estimated_profit' => '820997000.00',
         ])
         ->and($correctedMetrics->landCostOccurrences)->toBe(1)
         ->and($sourceCompatibleMetrics->totals)
@@ -119,8 +120,9 @@ it('updates the related revenue collections expenses and profit when one residen
         ->and($metrics->expenses['marketing'])->toBe('101016000.00')
         ->and($metrics->expenses['sales'])->toBe('126270000.00')
         ->and($metrics->expenses['administration'])->toBe('101016000.00')
+        ->and($metrics->expenses['design_supervision'])->toBe('63135000.00')
         ->and($metrics->constructionCosts['total'])->toBe('1242000000.00')
-        ->and($metrics->totals['estimated_profit'])->toBe('924048000.00');
+        ->and($metrics->totals['estimated_profit'])->toBe('891963000.00');
 });
 
 it('updates land-dependent areas and costs while keeping infrastructure area independent', function () {
@@ -141,10 +143,11 @@ it('updates land-dependent areas and costs while keeping infrastructure area ind
         ->and($metrics->constructionCosts['residential'])->toBe('900000000.00')
         ->and($metrics->constructionCosts['infrastructure_landscape'])->toBe('207000000.00')
         ->and($metrics->constructionCosts['total'])->toBe('1107000000.00')
-        ->and($metrics->totals['estimated_profit'])->toBe('713205000.00');
+        ->and($metrics->expenses['design_supervision'])->toBe('53100000.00')
+        ->and($metrics->totals['estimated_profit'])->toBe('687780000.00');
 });
 
-it('adds hotel revenue to total revenue and profit without changing percentage expenses or annual collections', function () {
+it('uses total revenue including hotel for every percentage expense', function () {
     $project = makeCalculationProject([
         'has_hotel' => true,
         'hotel_revenue' => '50000000',
@@ -155,11 +158,13 @@ it('adds hotel revenue to total revenue and profit without changing percentage e
 
     expect($metrics->revenues['hotel'])->toBe('50000000.00')
         ->and($metrics->revenues['total_with_hotel'])->toBe('2492600000.00')
-        ->and($metrics->expenses['marketing'])->toBe('97704000.00')
-        ->and($metrics->expenses['sales'])->toBe('122130000.00')
-        ->and($metrics->expenses['administration'])->toBe('97704000.00')
-        ->and($metrics->totals['estimated_profit'])->toBe('902012000.00')
-        ->and($metrics->annualCollectionTotal)->toBe('2442600000.00');
+        ->and($metrics->expenses['marketing'])->toBe('99704000.00')
+        ->and($metrics->expenses['sales'])->toBe('124630000.00')
+        ->and($metrics->expenses['administration'])->toBe('99704000.00')
+        ->and($metrics->expenses['design_supervision'])->toBe('62315000.00')
+        ->and($metrics->totals['estimated_profit'])->toBe('864247000.00')
+        ->and($metrics->annualCollectionTotal)->toBe('2442600000.00')
+        ->and($metrics->calculationNotes)->toContain('percentage_expense_base_is_total_revenue');
 });
 
 it('calculates every saved year and preserves the source totals when zero years extend the duration', function () {
@@ -190,8 +195,8 @@ it('keeps revenue cost and profit unchanged when only the valid collection durat
     expect($metrics->annualCollections)->toHaveCount($durationYears)
         ->and($metrics->annualCollectionTotal)->toBe('2442600000.00')
         ->and($metrics->revenues['total_with_hotel'])->toBe('2442600000.00')
-        ->and($metrics->totals['total_cost'])->toBe('1590588000.00')
-        ->and($metrics->totals['estimated_profit'])->toBe('852012000.00')
+        ->and($metrics->totals['total_cost'])->toBe('1620603000.00')
+        ->and($metrics->totals['estimated_profit'])->toBe('821997000.00')
         ->and($metrics->unavailableReasons)->toBe([]);
 })->with([
     'one year' => 1,

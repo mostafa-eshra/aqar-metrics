@@ -48,7 +48,8 @@ return [
     'study_rules' => [
         'land_cost' => 'total_amount_counted_once',
         'hotel_revenue' => 'explicit_total_not_distributed_annually',
-        'marketing_sales_administration_base' => 'residential_and_commercial_revenue_only',
+        'marketing_sales_administration_base' => 'total_revenue_with_hotel',
+        'design_supervision_base' => 'total_revenue_with_hotel',
         'residential_construction_area' => 'maximum_buildable_area',
         'residential_sales_area' => 'developer_share_of_maximum_buildable_area',
         'commercial_and_hotel_areas' => 'independent_from_residential_sales_area',
