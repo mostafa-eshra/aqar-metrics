@@ -1,53 +1,57 @@
 @extends('layouts.admin')
 
 @section('title', __('app.projects.show').' | '.$project->name.' | '.__('app.name'))
+@section('context', __('app.projects.show'))
 
 @section('content')
-    <div class="d-flex flex-column flex-xl-row justify-content-between align-items-xl-start gap-3 mb-4">
-        <div>
-            <a class="small text-decoration-none" href="{{ route('admin.projects.index') }}">{{ __('app.projects.results.back_to_projects') }}</a>
-            <p class="text-uppercase small fw-semibold text-secondary mt-3 mb-1">{{ __('app.projects.results.eyebrow') }}</p>
-            <h1 class="h2 fw-bold text-aqar mb-2">{{ $project->name }}</h1>
+    <section class="project-identity mb-4">
+        <x-admin.page-header :eyebrow="__('app.projects.results.eyebrow')" :title="$project->name" class="mb-3">
+            <x-slot:actions>
+                @can('update', $project)
+                    <a class="btn btn-aqar d-inline-flex align-items-center gap-2" href="{{ route('admin.projects.edit', $project) }}">
+                        <x-admin.icon name="edit" size="18" />{{ __('app.projects.edit') }}
+                    </a>
+                @endcan
+                <div class="dropdown">
+                    <button class="btn btn-outline-secondary d-inline-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <x-admin.icon name="dots" size="18" />{{ __('app.actions') }}
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end">
+                        @can('analyze', $project)
+                            <a class="dropdown-item" href="{{ route('admin.projects.analysis', $project) }}">{{ __('app.phase_nine.open_analysis') }}</a>
+                        @endcan
+                        @can('export', $project)
+                            <a class="dropdown-item" href="{{ route('admin.projects.exports.excel', $project) }}">{{ __('app.phase_nine.export_excel') }}</a>
+                        @endcan
+                        @can('duplicate', $project)
+                            <form method="POST" action="{{ route('admin.projects.duplicate', $project) }}">
+                                @csrf
+                                <button class="dropdown-item" type="submit">{{ __('app.projects.duplicate') }}</button>
+                            </form>
+                        @endcan
+                        @can('archive', $project)
+                            <div class="dropdown-divider"></div>
+                            <form class="js-confirm-archive" method="POST" action="{{ route('admin.projects.archive', $project) }}" data-confirm="{{ __('app.projects.archive_confirmation') }}">
+                                @csrf
+                                <button class="dropdown-item text-danger" type="submit">{{ __('app.projects.archive') }}</button>
+                            </form>
+                        @endcan
+                    </div>
+                </div>
+            </x-slot:actions>
+        </x-admin.page-header>
+
             <div class="d-flex flex-wrap align-items-center gap-2 project-meta-list">
                 <span class="badge {{ $dashboard['status_class'] }}">{{ $project->status->label() }}</span>
                 <span>{{ __('app.projects.owner') }}: <strong>{{ $project->owner->name }}</strong></span>
-                <span>{{ __('app.projects.currency') }}: <strong>{{ $dashboard['currency_label'] }} ({{ $project->currency_code }})</strong></span>
+                <span>{{ __('app.projects.currency') }}: <strong>{{ $dashboard['currency_label'] }} ({{ $dashboard['currency_symbol'] }})</strong></span>
                 <span>{{ __('app.projects.duration') }}: <strong>{{ trans_choice('app.projects.duration_years', $project->project_duration_years, ['count' => $project->project_duration_years]) }}</strong></span>
                 @if ($project->location)
                     <span>{{ __('app.projects.results.location') }}: <strong>{{ $project->location }}</strong></span>
                 @endif
                 <span>{{ __('app.projects.last_updated') }}: <strong>{{ $dashboard['updated_at'] }}</strong></span>
             </div>
-        </div>
-
-        <div class="d-flex flex-wrap gap-2">
-            @can('analyze', $project)
-                <a class="btn btn-outline-success" href="{{ route('admin.projects.analysis', $project) }}">{{ __('app.phase_nine.open_analysis') }}</a>
-            @endcan
-            @can('update', $project)
-                <a class="btn btn-aqar" href="{{ route('admin.projects.edit', $project) }}">{{ __('app.edit') }}</a>
-            @endcan
-            @can('duplicate', $project)
-                <form method="POST" action="{{ route('admin.projects.duplicate', $project) }}">
-                    @csrf
-                    <button class="btn btn-outline-primary" type="submit">{{ __('app.projects.duplicate') }}</button>
-                </form>
-            @endcan
-            @can('archive', $project)
-                <form class="js-confirm-archive" method="POST" action="{{ route('admin.projects.archive', $project) }}" data-confirm="{{ __('app.projects.archive_confirmation') }}">
-                    @csrf
-                    <button class="btn btn-outline-danger" type="submit">{{ __('app.projects.archive') }}</button>
-                </form>
-            @endcan
-            @can('export', $project)
-                <a class="btn btn-outline-primary" href="{{ route('admin.projects.exports.excel', $project) }}">{{ __('app.phase_nine.export_excel') }}</a>
-            @endcan
-        </div>
-    </div>
-
-    @if (session('status'))
-        <div class="alert alert-success" role="status">{{ session('status') }}</div>
-    @endif
+    </section>
 
     @if ($dashboard['warnings'] !== [])
         <section class="alert alert-warning" aria-labelledby="result-warnings-heading">
@@ -60,18 +64,13 @@
         </section>
     @endif
 
-    <section class="alert bg-aqar-soft border" aria-labelledby="calculation-assumptions-heading">
-        <h2 class="h6 fw-bold text-aqar" id="calculation-assumptions-heading">{{ __('app.projects.results.assumptions_title') }}</h2>
-        <p class="mb-2">
-            {{ __('app.projects.results.calculation_version') }}:
-            <strong>{{ $dashboard['calculation_version_label'] }}</strong>
-        </p>
+    <details class="alert bg-aqar-soft border">
+        <summary class="fw-bold text-aqar" id="calculation-assumptions-heading">{{ __('app.projects.results.assumptions_title') }} — {{ $dashboard['calculation_version_label'] }}</summary>
+        <p class="mt-3 mb-2">{{ __('app.projects.results.calculation_version') }}: <strong>{{ $dashboard['calculation_version_label'] }}</strong></p>
         <ul class="mb-0">
-            @foreach ($dashboard['calculation_notes'] as $note)
-                <li>{{ $note }}</li>
-            @endforeach
+            @foreach ($dashboard['calculation_notes'] as $note)<li>{{ $note }}</li>@endforeach
         </ul>
-    </section>
+    </details>
 
     <nav class="project-results-tabs mb-4" aria-label="{{ __('app.projects.results.project_summary') }}">
         <div class="nav nav-pills flex-nowrap overflow-x-auto" id="project-results-tabs" role="tablist">

@@ -1,25 +1,18 @@
 @extends('layouts.admin')
 
 @section('title', __('app.phase_nine.title').' | '.$project->name.' | '.__('app.name'))
+@section('context', __('app.phase_nine.title'))
 
 @section('content')
-    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-start gap-3 mb-4">
-        <div>
-            <a class="small text-decoration-none" href="{{ route('admin.projects.show', $project) }}">{{ __('app.phase_nine.back_to_project') }}</a>
-            <h1 class="h2 fw-bold text-aqar mt-3 mb-1">{{ __('app.phase_nine.title') }}</h1>
-            <p class="text-secondary mb-0">{{ $project->name }} — {{ __('app.phase_nine.description') }}</p>
-        </div>
-        <div class="d-flex flex-wrap gap-2">
+    <x-admin.page-header :eyebrow="$project->name" :title="__('app.phase_nine.title')" :description="__('app.phase_nine.description')">
+        <x-slot:actions>
+            <a class="btn btn-outline-secondary" href="{{ route('admin.projects.show', $project) }}">{{ __('app.phase_nine.back_to_project') }}</a>
             <a class="btn btn-outline-primary" href="{{ route('admin.projects.exports.excel', $project) }}">{{ __('app.phase_nine.export_excel') }}</a>
             <a class="btn btn-outline-secondary" href="{{ route('admin.projects.compare') }}">{{ __('app.phase_nine.compare') }}</a>
-        </div>
-    </div>
+        </x-slot:actions>
+    </x-admin.page-header>
 
-    @if (session('status'))
-        <div class="alert alert-success" role="status">{{ session('status') }}</div>
-    @endif
-
-    <div class="row g-4">
+    <div class="row g-4 analysis-grid">
         <div class="col-12">
             <section class="card app-card">
                 <div class="card-body">
@@ -165,7 +158,7 @@
                         @forelse ($project->viewers as $viewer)
                             <div class="d-flex justify-content-between align-items-center gap-2 border-top py-2">
                                 <span>{{ $viewer->name }}<br><small class="text-secondary">{{ $viewer->email }}</small></span>
-                                <form method="POST" action="{{ route('admin.projects.viewers.destroy', [$project, $viewer]) }}">
+                                <form method="POST" action="{{ route('admin.projects.viewers.destroy', [$project, $viewer]) }}" data-confirm="{{ __('app.phase_nine.sharing.remove_confirmation', ['name' => $viewer->name]) }}">
                                     @csrf
                                     @method('DELETE')
                                     <button class="btn btn-sm btn-outline-danger" type="submit">{{ __('app.phase_nine.sharing.remove') }}</button>

@@ -21,6 +21,7 @@
             maxlength="255"
             autocomplete="name"
         >
+        @error('name')<div class="invalid-feedback">{{ $message }}</div>@enderror
     </div>
 
     <div class="col-md-6">
@@ -36,6 +37,7 @@
             autocomplete="email"
             dir="ltr"
         >
+        @error('email')<div class="invalid-feedback">{{ $message }}</div>@enderror
     </div>
 
     <div class="col-md-6">
@@ -50,6 +52,7 @@
             autocomplete="new-password"
             dir="ltr"
         >
+        @error('password')<div class="invalid-feedback">{{ $message }}</div>@enderror
         @if ($isEdit)
             <div class="form-text">{{ __('app.users.password_edit_help') }}</div>
         @endif
@@ -78,6 +81,7 @@
                 </option>
             @endforeach
         </select>
+        @error('role')<div class="invalid-feedback">{{ $message }}</div>@enderror
     </div>
 
     <div class="col-md-6 d-flex align-items-end">
@@ -96,7 +100,10 @@
     </div>
 </div>
 
-<div class="d-flex gap-2 mt-4">
-    <button class="btn btn-aqar" type="submit">{{ __('app.save') }}</button>
-    <a class="btn btn-outline-secondary" href="{{ route('admin.users.index') }}">{{ __('app.cancel') }}</a>
+<div class="sticky-form-actions mt-4">
+    <span class="text-secondary small d-none d-md-inline">{{ __('app.users.form_help') }}</span>
+    <div class="d-flex gap-2 ms-auto">
+        <button class="btn btn-aqar" type="submit">{{ __('app.save') }}</button>
+        <a class="btn btn-outline-secondary" href="{{ route('admin.users.index') }}">{{ __('app.cancel') }}</a>
+    </div>
 </div>

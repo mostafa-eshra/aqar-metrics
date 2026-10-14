@@ -88,13 +88,17 @@ it('exports a valid Excel workbook with inputs results and cash flow sheets', fu
     $archive = new ZipArchive;
     $opened = $archive->open($path);
     $workbook = $archive->getFromName('xl/workbook.xml');
+    $inputs = $archive->getFromName('xl/worksheets/sheet1.xml');
     $results = $archive->getFromName('xl/worksheets/sheet2.xml');
     $archive->close();
     unlink($path);
 
     expect($opened)->toBeTrue()
         ->and($workbook)->toContain('المدخلات', 'النتائج', 'التدفقات النقدية')
-        ->and($results)->toContain('821997000.00', 'flexible-phases-v2');
+        ->and($inputs)->toContain('الإصدار 2: تكلفة الأرض مرة واحدة وتوزيع مراحل قابل للتعديل')
+        ->and($results)->toContain('821997000.00', 'الإصدار 2: تكلفة الأرض مرة واحدة وتوزيع مراحل قابل للتعديل')
+        ->and($inputs)->not->toContain('flexible-phases-v2')
+        ->and($results)->not->toContain('flexible-phases-v2');
 });
 
 /** @param array<string, mixed> $overrides */

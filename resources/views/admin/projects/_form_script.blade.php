@@ -232,8 +232,9 @@
 
                 cell.dataset.yearCell = String(year);
                 inputGroup.className = 'input-group input-group-sm schedule-percentage-input';
-                inputGroup.dir = 'ltr';
+                inputGroup.dir = 'rtl';
                 input.className = 'form-control text-end';
+                input.dir = 'ltr';
                 input.type = 'text';
                 input.inputMode = 'decimal';
                 input.name = `${field}[${group}][${year}]`;
@@ -578,6 +579,162 @@
                     previewButton.textContent = @json(__('app.projects.preview.button'));
                 }
             });
+        });
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('project-form');
+
+            if (!form) {
+                return;
+            }
+
+            const stepButtons = [...form.querySelectorAll('[data-form-step-target]')];
+            const stepPanels = [...form.querySelectorAll('[data-form-step]')];
+            const previousButton = document.getElementById('form-step-previous');
+            const nextButton = document.getElementById('form-step-next');
+            const previewButton = document.getElementById('preview-button');
+            const hotelSelect = document.getElementById('has_hotel');
+            const mobileTitle = document.getElementById('mobile-step-title');
+            const mobileCount = document.getElementById('mobile-step-count');
+            const mobileProgress = document.getElementById('mobile-step-progress');
+            let currentStep = 'basic';
+
+            const visibleButtons = () => stepButtons.filter(button => !button.hidden);
+
+            const refreshStepStates = () => {
+                for (const button of stepButtons) {
+                    const panels = stepPanels.filter(panel => panel.dataset.formStep === button.dataset.formStepTarget);
+                    const controls = panels.flatMap(panel => [...panel.querySelectorAll('input:not([type="hidden"]), select, textarea')]);
+                    const hasError = panels.some(panel => panel.querySelector('.is-invalid, .text-danger'));
+                    const requiredControls = controls.filter(control => control.required);
+                    const completionControls = requiredControls.length > 0 ? requiredControls : controls;
+                    let hasValues = completionControls.length > 0 && completionControls.every(control => String(control.value).trim() !== '');
+
+                    if (button.dataset.formStepTarget === 'schedule') {
+                        hasValues = document.getElementById('collection-schedule-status')?.classList.contains('alert-success') ?? false;
+                    }
+
+                    if (button.dataset.formStepTarget === 'review') {
+                        hasValues = !document.getElementById('preview-panel')?.classList.contains('d-none');
+                    }
+
+                    button.classList.toggle('has-error', hasError);
+                    button.classList.toggle('is-complete', hasValues && !hasError);
+                    button.querySelector('.form-step-check')?.classList.toggle('opacity-0', !hasValues || hasError);
+                }
+            };
+
+            const updateHotelStep = () => {
+                const hotelButton = stepButtons.find(button => button.dataset.formStepTarget === 'hotel');
+                const hasHotel = hotelSelect?.value === '1';
+
+                if (hotelButton) {
+                    hotelButton.hidden = !hasHotel;
+                }
+
+                if (!hasHotel && currentStep === 'hotel') {
+                    showStep('advanced');
+                }
+
+                visibleButtons().forEach((button, index) => {
+                    const number = button.querySelector('.form-step-number');
+
+                    if (number) {
+                        number.textContent = String(index + 1);
+                    }
+                });
+            };
+
+            const showStep = (step, focusHeading = false) => {
+                const availableButtons = visibleButtons();
+                const requestedButton = availableButtons.find(button => button.dataset.formStepTarget === step) ?? availableButtons[0];
+
+                if (!requestedButton) {
+                    return;
+                }
+
+                currentStep = requestedButton.dataset.formStepTarget;
+
+                for (const panel of stepPanels) {
+                    panel.hidden = panel.dataset.formStep !== currentStep;
+                }
+
+                for (const button of stepButtons) {
+                    const isActive = button === requestedButton;
+                    button.classList.toggle('active', isActive);
+                    isActive ? button.setAttribute('aria-current', 'step') : button.removeAttribute('aria-current');
+                }
+
+                const index = availableButtons.indexOf(requestedButton);
+                previousButton.disabled = index <= 0;
+                nextButton.disabled = index >= availableButtons.length - 1;
+                mobileTitle.textContent = requestedButton.querySelector('span:nth-child(2)')?.textContent ?? '';
+                mobileCount.textContent = @json(__('app.projects.workflow.step', ['current' => ':current', 'total' => ':total']))
+                    .replace(':current', String(index + 1))
+                    .replace(':total', String(availableButtons.length));
+                mobileProgress.style.width = `${((index + 1) / availableButtons.length) * 100}%`;
+
+                if (focusHeading) {
+                    const heading = stepPanels.find(panel => panel.dataset.formStep === currentStep)?.querySelector('h2, h3');
+                    heading?.setAttribute('tabindex', '-1');
+                    heading?.focus({ preventScroll: true });
+                    heading?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            };
+
+            stepButtons.forEach(button => {
+                button.addEventListener('click', () => showStep(button.dataset.formStepTarget, true));
+            });
+
+            previousButton?.addEventListener('click', () => {
+                const buttons = visibleButtons();
+                const index = buttons.findIndex(button => button.dataset.formStepTarget === currentStep);
+                showStep(buttons[Math.max(0, index - 1)]?.dataset.formStepTarget, true);
+            });
+
+            nextButton?.addEventListener('click', () => {
+                const buttons = visibleButtons();
+                const index = buttons.findIndex(button => button.dataset.formStepTarget === currentStep);
+                showStep(buttons[Math.min(buttons.length - 1, index + 1)]?.dataset.formStepTarget, true);
+            });
+
+            previewButton?.addEventListener('click', () => showStep('review', true));
+            hotelSelect?.addEventListener('change', () => {
+                updateHotelStep();
+                refreshStepStates();
+            });
+
+            form.addEventListener('input', refreshStepStates);
+            form.addEventListener('invalid', event => {
+                const panel = event.target.closest('[data-form-step]');
+
+                if (panel) {
+                    showStep(panel.dataset.formStep);
+                }
+            }, true);
+
+            form.querySelectorAll('[data-error-step]').forEach(link => {
+                link.addEventListener('click', event => {
+                    event.preventDefault();
+                    showStep(link.dataset.errorStep);
+                    requestAnimationFrame(() => {
+                        const target = document.querySelector(link.getAttribute('href'));
+                        target?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        target?.focus?.({ preventScroll: true });
+                    });
+                });
+            });
+
+            updateHotelStep();
+            refreshStepStates();
+
+            const firstErrorStep = stepButtons.find(button => button.classList.contains('has-error'))?.dataset.formStepTarget;
+            showStep(firstErrorStep ?? 'basic');
+
+            if (firstErrorStep) {
+                document.getElementById('project-validation-summary')?.focus();
+            }
         });
     </script>
 @endpush

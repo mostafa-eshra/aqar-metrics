@@ -380,6 +380,9 @@ it('renders the Arabic project dashboard from one calculation result', function 
         ->assertSee('الإيرادات والتحصيل')
         ->assertSee('التكاليف')
         ->assertSee('تفاصيل الحساب')
+        ->assertSee('الجنيه المصري (ج.م)')
+        ->assertSee('ج.م/م²')
+        ->assertDontSee('EGP')
         ->assertSee('2,442,600,000.00')
         ->assertSee('821,997,000.00')
         ->assertSee('0.0000')
@@ -408,7 +411,7 @@ it('renders result years from the saved project duration', function () {
         ->and(substr_count($response->getContent(), 'data-annual-result-year='))->toBe(10);
 });
 
-it('reconciles the cost chart for the Excel source calculation version', function () {
+it('reconciles the cost chart for the calculation version that counts land twice', function () {
     $owner = User::factory()->create();
     $project = Project::factory()->for($owner, 'owner')->create([
         'calculation_version' => CalculationVersion::EXCEL_SOURCE_V1,
@@ -425,11 +428,13 @@ it('reconciles the cost chart for the Excel source calculation version', functio
             return $dashboard['cost_chart_reconciles'] === true
                 && in_array('land_excel_adjustment', $costKeys, true);
         })
-        ->assertSee('إصدار مطابقة Excel 1: تكلفة الأرض مرتان')
-        ->assertSee('إضافة الأرض لمطابقة Excel')
+        ->assertSee('الإصدار 1: تكلفة الأرض مرتان')
+        ->assertSee('إضافة تكلفة الأرض للمرة الثانية')
         ->assertSee('إجمالي السكني والتجاري × نسبة التسويق ÷ 100')
         ->assertSee('إجمالي الإنشاء × نسبة التصاميم والإشراف ÷ 100')
-        ->assertSee('هذا المشروع يستخدم إصدار مطابقة Excel الذي يضيف تكلفة الأرض مرتين إلى إجمالي التكلفة.');
+        ->assertSee('إصدار الحساب المحفوظ لهذا المشروع يضيف تكلفة الأرض مرتين إلى إجمالي التكلفة.')
+        ->assertDontSee('ملف Excel')
+        ->assertDontSee('مطابقة Excel');
 });
 
 it('shows affected missing inputs and hotel timing warnings', function () {

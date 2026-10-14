@@ -1,8 +1,9 @@
 <div class="{{ $columnClass ?? 'col-md-6' }}">
     <label class="form-label" for="{{ $name }}">{{ __('app.projects.attributes.'.$name) }}</label>
-    <div class="input-group" dir="ltr">
+    <div class="input-group" dir="rtl">
         <input
             class="form-control text-end @error($name) is-invalid @enderror"
+            dir="ltr"
             id="{{ $name }}"
             name="{{ $name }}"
             type="text"

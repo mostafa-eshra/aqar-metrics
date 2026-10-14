@@ -27,19 +27,13 @@
 
         <div class="card-body p-4 p-lg-5 border-top">
             <div class="row g-3 mb-4">
-                <div class="col-md-4">
+                <div class="col-md-6">
                     <div class="p-3 rounded-3 bg-white border h-100">
                         <div class="text-secondary small mb-1">{{ __('app.foundation.calculation_version') }}</div>
                         <div class="fw-bold" dir="ltr">{{ config('aqar_metrics.calculation.default_version') }}</div>
                     </div>
                 </div>
-                <div class="col-md-4">
-                    <div class="p-3 rounded-3 bg-white border h-100">
-                        <div class="text-secondary small mb-1">{{ __('app.foundation.source_version') }}</div>
-                        <div class="fw-bold" dir="ltr">{{ config('aqar_metrics.calculation.source_compatibility_version') }}</div>
-                    </div>
-                </div>
-                <div class="col-md-4">
+                <div class="col-md-6">
                     <div class="p-3 rounded-3 bg-white border h-100">
                         <div class="text-secondary small mb-1">{{ __('app.foundation.input_count') }}</div>
                         <div class="fw-bold">{{ __('app.foundation.input_count_value') }}</div>

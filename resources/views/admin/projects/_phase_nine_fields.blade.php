@@ -10,7 +10,7 @@
     $cashFlowDuration = max(1, (int) old('project_duration_years', $project->project_duration_years));
 @endphp
 
-<section class="project-form-section" aria-labelledby="phase-distribution-heading">
+<section class="project-form-section" id="advanced-step" aria-labelledby="phase-distribution-heading" data-form-step="advanced">
     <h2 class="h5 text-aqar" id="phase-distribution-heading">{{ __('app.phase_nine.phase_distribution.title') }}</h2>
     <p class="text-secondary small">{{ __('app.phase_nine.phase_distribution.help') }}</p>
     <div class="row g-3">
@@ -19,9 +19,10 @@
                 <label class="form-label" for="residential_phase_distribution_{{ $phase }}">
                     {{ __('app.phase_nine.phases.'.$phase) }}
                 </label>
-                <div class="input-group" dir="ltr">
+                <div class="input-group" dir="rtl">
                     <input
                         class="form-control text-end @error('residential_phase_distribution.'.$phase) is-invalid @enderror"
+                        dir="ltr"
                         id="residential_phase_distribution_{{ $phase }}"
                         name="residential_phase_distribution[{{ $phase }}]"
                         type="text"
@@ -37,15 +38,16 @@
     @error('residential_phase_distribution')<div class="text-danger small mt-2">{{ $message }}</div>@enderror
 </section>
 
-<section class="project-form-section" id="cash-flow-editor" aria-labelledby="cash-flow-heading">
+<section class="project-form-section" id="cash-flow-editor" aria-labelledby="cash-flow-heading" data-form-step="advanced">
     <h2 class="h5 text-aqar" id="cash-flow-heading">{{ __('app.phase_nine.cash_flow.title') }}</h2>
     <p class="text-secondary small">{{ __('app.phase_nine.cash_flow.help') }}</p>
     <div class="row g-3 mb-3">
         <div class="col-lg-4">
             <label class="form-label" for="discount_rate_percent">{{ __('app.phase_nine.cash_flow.discount_rate') }}</label>
-            <div class="input-group" dir="ltr">
+            <div class="input-group" dir="rtl">
                 <input
                     class="form-control text-end @error('discount_rate_percent') is-invalid @enderror"
+                    dir="ltr"
                     id="discount_rate_percent"
                     name="discount_rate_percent"
                     type="text"

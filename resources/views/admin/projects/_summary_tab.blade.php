@@ -38,8 +38,8 @@
                                                         <span
                                                             class="chart-segment chart-color-{{ $loop->index }}"
                                                             style="--segment-size: {{ $segment['share_percent'] }}%"
-                                                            title="{{ $segment['label'] }}: {{ $segment['formatted_value'] }} {{ $project->currency_code }}"
-                                                            aria-label="{{ $segment['label'] }}: {{ $segment['formatted_value'] }} {{ $project->currency_code }}"
+                                                            title="{{ $segment['label'] }}: {{ $segment['formatted_value'] }} {{ $dashboard['currency_symbol'] }}"
+                                                            aria-label="{{ $segment['label'] }}: {{ $segment['formatted_value'] }} {{ $dashboard['currency_symbol'] }}"
                                                         ></span>
                                                     @endif
                                                 @endforeach
@@ -76,15 +76,15 @@
                                     <span
                                         class="chart-segment chart-color-{{ $loop->index % 10 }}"
                                         style="--segment-size: {{ $item['share_percent'] }}%"
-                                        title="{{ $item['label'] }}: {{ $item['formatted_value'] }} {{ $project->currency_code }}"
-                                        aria-label="{{ $item['label'] }}: {{ $item['formatted_value'] }} {{ $project->currency_code }}"
+                                        title="{{ $item['label'] }}: {{ $item['formatted_value'] }} {{ $dashboard['currency_symbol'] }}"
+                                        aria-label="{{ $item['label'] }}: {{ $item['formatted_value'] }} {{ $dashboard['currency_symbol'] }}"
                                     ></span>
                                 @endif
                             @endforeach
                         </div>
                         <div class="d-flex justify-content-between gap-3 mt-2 fw-semibold">
                             <span>{{ __('app.projects.results.chart_total') }}</span>
-                            <span dir="ltr">{{ $dashboard['cost_chart']['total']['formatted_value'] }} {{ $project->currency_code }}</span>
+                            <span><span dir="ltr">{{ $dashboard['cost_chart']['total']['formatted_value'] }}</span> {{ $dashboard['currency_symbol'] }}</span>
                         </div>
                         <p class="small mt-2 mb-3 {{ $dashboard['cost_chart_reconciles'] ? 'text-success' : 'text-danger' }}">
                             {{ $dashboard['cost_chart_reconciles'] ? __('app.projects.results.chart_reconciled') : __('app.projects.results.chart_not_reconciled') }}

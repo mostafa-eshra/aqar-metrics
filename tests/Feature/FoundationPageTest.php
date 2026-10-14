@@ -10,7 +10,7 @@ it('renders the Arabic RTL phase one foundation page', function () {
         ->assertSee('أساس موحّد لدراسات الجدوى العقارية')
         ->assertSee('حقول الدراسة التي يدخلها المستخدم')
         ->assertSee('flexible-phases-v2')
-        ->assertSee('excel-source-v1');
+        ->assertDontSee('excel-source-v1');
 });
 
 it('defines the manual study fields and a complete default collection template', function () {

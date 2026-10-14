@@ -39,21 +39,22 @@ class ProjectResource extends JsonResource
     private function statusBadge(ProjectStatus $status): string
     {
         $class = match ($status) {
-            ProjectStatus::DRAFT => 'text-bg-warning',
-            ProjectStatus::COMPLETED => 'text-bg-success',
-            ProjectStatus::ARCHIVED => 'text-bg-secondary',
+            ProjectStatus::DRAFT => 'bg-yellow-lt text-yellow',
+            ProjectStatus::COMPLETED => 'bg-success-lt text-success',
+            ProjectStatus::ARCHIVED => 'bg-secondary-lt text-secondary',
         };
 
-        return '<span class="badge '.$class.'">'.e($status->label()).'</span>';
+        return '<span class="badge '.$class.'"><span class="status-dot"></span>'.e($status->label()).'</span>';
     }
 
     private function actions(Request $request, Project $project): string
     {
         $user = $request->user();
-        $actions = [];
+        $primaryAction = '';
+        $menuActions = [];
 
         if ($user?->can('view', $project)) {
-            $actions[] = sprintf(
+            $primaryAction = sprintf(
                 '<a class="btn btn-sm btn-aqar" href="%s">%s</a>',
                 e(route('admin.projects.show', $project)),
                 e(trans('app.projects.view')),
@@ -61,16 +62,16 @@ class ProjectResource extends JsonResource
         }
 
         if ($user?->can('update', $project)) {
-            $actions[] = sprintf(
-                '<a class="btn btn-sm btn-outline-secondary" href="%s">%s</a>',
+            $menuActions[] = sprintf(
+                '<li><a class="dropdown-item" href="%s">%s</a></li>',
                 e(route('admin.projects.edit', $project)),
                 e(trans('app.edit')),
             );
         }
 
         if ($user?->can('duplicate', $project)) {
-            $actions[] = sprintf(
-                '<form class="d-inline" method="POST" action="%s">%s<button class="btn btn-sm btn-outline-primary" type="submit">%s</button></form>',
+            $menuActions[] = sprintf(
+                '<li><form method="POST" action="%s">%s<button class="dropdown-item" type="submit">%s</button></form></li>',
                 e(route('admin.projects.duplicate', $project)),
                 csrf_field(),
                 e(trans('app.projects.duplicate')),
@@ -78,8 +79,8 @@ class ProjectResource extends JsonResource
         }
 
         if ($user?->can('archive', $project)) {
-            $actions[] = sprintf(
-                '<form class="d-inline js-confirm-archive" method="POST" action="%s" data-confirm="%s">%s<button class="btn btn-sm btn-outline-danger" type="submit">%s</button></form>',
+            $menuActions[] = sprintf(
+                '<li><hr class="dropdown-divider"></li><li><form class="js-confirm-archive" method="POST" action="%s" data-confirm="%s">%s<button class="dropdown-item text-danger" type="submit">%s</button></form></li>',
                 e(route('admin.projects.archive', $project)),
                 e(trans('app.projects.archive_confirmation')),
                 csrf_field(),
@@ -87,6 +88,12 @@ class ProjectResource extends JsonResource
             );
         }
 
-        return '<div class="d-flex flex-wrap gap-1">'.implode('', $actions).'</div>';
+        $menu = $menuActions === [] ? '' : sprintf(
+            '<div class="dropdown"><button class="btn btn-sm btn-icon btn-outline-secondary" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="%s">•••</button><ul class="dropdown-menu dropdown-menu-end">%s</ul></div>',
+            e(trans('app.actions')),
+            implode('', $menuActions),
+        );
+
+        return '<div class="d-flex justify-content-end gap-1">'.$primaryAction.$menu.'</div>';
     }
 }

@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Repositories;
 
+use App\Enums\ProjectStatus;
 use App\Models\Project;
 use App\Models\User;
 use App\Repositories\DTO\ProjectFilterDTO;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 
 final class ProjectRepository
 {
@@ -82,6 +84,44 @@ final class ProjectRepository
         }
 
         return $query->orderByDesc('projects.id');
+    }
+
+    /**
+     * @return array{
+     *     total: int,
+     *     drafts: int,
+     *     completed: int,
+     *     recently_updated: int,
+     *     recent_projects: Collection<int, Project>
+     * }
+     */
+    public static function dashboardFor(User $user): array
+    {
+        $totals = self::queryVisibleTo($user)
+            ->selectRaw(
+                'COUNT(*) as total, '
+                .'SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as drafts, '
+                .'SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as completed, '
+                .'SUM(CASE WHEN updated_at >= ? THEN 1 ELSE 0 END) as recently_updated',
+                [ProjectStatus::DRAFT->value, ProjectStatus::COMPLETED->value, now()->subDays(7)],
+            )
+            ->first();
+
+        $recentProjects = self::queryVisibleTo($user)
+            ->with('owner:id,name')
+            ->select(['id', 'user_id', 'name', 'location', 'status', 'currency_code', 'updated_at'])
+            ->orderByDesc('updated_at')
+            ->orderByDesc('id')
+            ->limit(5)
+            ->get();
+
+        return [
+            'total' => (int) ($totals?->getAttribute('total') ?? 0),
+            'drafts' => (int) ($totals?->getAttribute('drafts') ?? 0),
+            'completed' => (int) ($totals?->getAttribute('completed') ?? 0),
+            'recently_updated' => (int) ($totals?->getAttribute('recently_updated') ?? 0),
+            'recent_projects' => $recentProjects,
+        ];
     }
 
     /** @param array<string, mixed> $attributes */

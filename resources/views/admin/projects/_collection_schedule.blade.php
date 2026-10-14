@@ -51,6 +51,7 @@
 <section
     class="project-form-section"
     id="collection-schedule-editor"
+    data-form-step="schedule"
     aria-labelledby="collection-schedule-heading"
     data-duration-input="project_duration_years"
     data-required-total="100"
@@ -152,9 +153,10 @@
                                         $activeTotal += (float) $percentage;
                                     @endphp
                                     <td data-year-cell="{{ $year }}">
-                                        <div class="input-group input-group-sm schedule-percentage-input" dir="ltr">
+                                        <div class="input-group input-group-sm schedule-percentage-input" dir="rtl">
                                             <input
                                                 class="form-control text-end"
+                                                dir="ltr"
                                                 type="text"
                                                 inputmode="decimal"
                                                 name="{{ $section['field'] }}[{{ $group }}][{{ $year }}]"

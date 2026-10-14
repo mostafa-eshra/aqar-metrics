@@ -12,6 +12,7 @@ use Brick\Math\BigDecimal;
 use Brick\Math\RoundingMode;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Lang;
 
 /**
  * @mixin Project
@@ -49,6 +50,7 @@ final class ProjectDashboardResource extends JsonResource
             'currency_label' => config("aqar_metrics.project.currencies.{$project->currency_code}")
                 ?? $project->currency_code
                 ?? trans('app.projects.not_available'),
+            'currency_symbol' => $this->currencySymbol(),
             'summary_cards' => $this->summaryCards(),
             'input_rows' => $inputRows,
             'schedule_years' => $this->scheduleYears($project),
@@ -728,12 +730,25 @@ final class ProjectDashboardResource extends JsonResource
     private function unitLabel(string $unit): string
     {
         return match ($unit) {
-            'money' => (string) ($this->resource->currency_code ?? trans('app.projects.not_available')),
+            'money' => $this->currencySymbol(),
             'money_per_sqm' => trans('app.projects.results.units.money_per_sqm', [
-                'currency' => $this->resource->currency_code ?? trans('app.projects.not_available'),
+                'currency' => $this->currencySymbol(),
             ]),
             default => trans("app.projects.results.units.{$unit}"),
         };
+    }
+
+    private function currencySymbol(): string
+    {
+        $currencyCode = $this->resource->currency_code;
+
+        if ($currencyCode === null) {
+            return trans('app.projects.not_available');
+        }
+
+        $translationKey = "app.projects.currencies.{$currencyCode}";
+
+        return Lang::has($translationKey) ? trans($translationKey) : $currencyCode;
     }
 
     private function ratioForDisplay(?string $numerator, ?string $denominator): string

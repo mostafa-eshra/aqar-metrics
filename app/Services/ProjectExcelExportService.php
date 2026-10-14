@@ -63,7 +63,10 @@ final class ProjectExcelExportService
             ['مالك المشروع', $project->owner?->name],
             ['العملة', $project->currency_code],
             ['عمر المشروع', $project->project_duration_years],
-            ['إصدار الحساب', $project->calculation_version->value],
+            [
+                'إصدار الحساب',
+                trans("app.projects.results.calculation_versions.{$project->calculation_version->value}"),
+            ],
             ['معدل الخصم %', $project->discount_rate_percent],
         ];
 
@@ -85,8 +88,12 @@ final class ProjectExcelExportService
     private static function resultRows(ProjectMetricsDTO $metrics): array
     {
         $rows = [['النتيجة', 'القيمة']];
+        $results = $metrics->toArray();
+        $results['calculation_version'] = trans(
+            "app.projects.results.calculation_versions.{$metrics->calculationVersion->value}",
+        );
 
-        foreach (self::flatten($metrics->toArray()) as $key => $value) {
+        foreach (self::flatten($results) as $key => $value) {
             if (is_scalar($value) || $value === null) {
                 $rows[] = [$key, $value];
             }
