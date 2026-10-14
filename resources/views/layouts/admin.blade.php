@@ -11,10 +11,27 @@
 <body>
     <nav class="navbar navbar-dark app-navbar shadow-sm">
         <div class="container-fluid page-shell px-3 px-lg-4">
-            <a class="navbar-brand d-flex align-items-center gap-2 fw-semibold" href="{{ route('home') }}">
+            <a class="navbar-brand d-flex align-items-center gap-2 fw-semibold" href="{{ auth()->check() ? route('admin.dashboard') : route('home') }}">
                 <span class="brand-mark" aria-hidden="true">ع</span>
                 <span>{{ __('app.name') }}</span>
             </a>
+
+            <div class="d-flex align-items-center gap-2 text-white">
+                @auth
+                    @can(\App\Enums\PermissionEnum::USER_LIST->value)
+                        <a class="btn btn-sm btn-outline-light" href="{{ route('admin.users.index') }}">
+                            {{ __('app.users.title') }}
+                        </a>
+                    @endcan
+                    <span class="d-none d-md-inline small">{{ auth()->user()->name }}</span>
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <button class="btn btn-sm btn-light" type="submit">{{ __('app.auth.logout') }}</button>
+                    </form>
+                @else
+                    <a class="btn btn-sm btn-light" href="{{ route('login') }}">{{ __('app.auth.login') }}</a>
+                @endauth
+            </div>
         </div>
     </nav>
 

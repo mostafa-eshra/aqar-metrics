@@ -41,6 +41,24 @@ body {
     box-shadow: 0 1rem 2.75rem rgba(25, 55, 50, 0.08);
 }
 
+.app-card {
+    border: 1px solid var(--aqar-border);
+    border-radius: 1rem;
+    box-shadow: 0 0.75rem 2rem rgba(25, 55, 50, 0.07);
+}
+
+.btn-aqar {
+    --bs-btn-color: #fff;
+    --bs-btn-bg: var(--aqar-primary);
+    --bs-btn-border-color: var(--aqar-primary);
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: var(--aqar-primary-dark);
+    --bs-btn-hover-border-color: var(--aqar-primary-dark);
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: var(--aqar-primary-dark);
+    --bs-btn-active-border-color: var(--aqar-primary-dark);
+}
+
 .decision-card {
     height: 100%;
     border-color: var(--aqar-border);

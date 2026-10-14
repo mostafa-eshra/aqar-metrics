@@ -3,6 +3,7 @@
 use App\Enums\CalculationVersion;
 
 return [
+
     'calculation' => [
         'default_version' => CalculationVersion::CORRECTED_V1->value,
         'source_compatibility_version' => CalculationVersion::EXCEL_SOURCE_V1->value,
